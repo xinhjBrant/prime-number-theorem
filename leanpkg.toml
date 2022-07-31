@@ -1,0 +1,8 @@
+[package]
+name = "prime-number-theorem"
+version = "0.1"
+lean_version = "leanprover-community/lean:3.45.0"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "5e07117c7ea5a569e5a406f7cff3a2614c3ded79"}
