@@ -13,8 +13,13 @@ noncomputable theory
 variables {E : Type} 
 [normed_group E] [normed_space ℂ E] [complete_space E] 
 
+/-! We define the path as a differentiable function f : ℝ → ℂ with a continuous derivative,
+ defined on ℝ but we only use their value on [0,1]. -/
+
+
 def constant_path (z:ℂ):ℝ → ℂ :=λ (t:ℝ ), z 
 
+/-- The path concatenation of two path means compressing their domain [0,1] to [0, 1/2] (and [1/2, 1]) then concate them back to [0,1].-/
 def path_concatenation (L1:ℝ → ℂ)(L2:ℝ →ℂ)
 (hw: L1 1=L2 0):ℝ → ℂ :=
 λ (t:ℝ), if t<1/2 then L1 (2*t) else L2 (-1+2*t)
