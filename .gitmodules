@@ -1,0 +1,3 @@
+[submodule "path_to_submodule"] 
+  path = _target/deps/mathlib 
+  url = git://https://github.com/leanprover-community/mathlib/
