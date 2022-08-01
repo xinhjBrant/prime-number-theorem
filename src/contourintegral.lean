@@ -24,6 +24,7 @@ def path_concatenation (L1:ℝ → ℂ)(L2:ℝ →ℂ)
 (hw: L1 1=L2 0):ℝ → ℂ :=
 λ (t:ℝ), if t<1/2 then L1 (2*t) else L2 (-1+2*t)
 
+/- The inverse of a path is to reverse the direction of a path. -/
 def path_inverse(L:ℝ → ℂ):ℝ → ℂ := λ (t:ℝ ), L(1-t) 
 
 lemma path_concatenation_left(L1:ℝ → ℂ)(L2:ℝ→ℂ )
@@ -139,6 +140,7 @@ begin
   simp,
 end
 
+/- The affine function is a ℝ → ℝ function with the form of t ↦ b + k * t for some k, b ∈ ℝ. -/
 def affine_function(k:ℝ)(b:ℝ):ℝ → ℝ := λ t:ℝ , b+k*t
 
 def constant_real_function(k:ℝ):ℝ→ ℝ :=λ t:ℝ , k
@@ -146,6 +148,8 @@ def constant_real_function(k:ℝ):ℝ→ ℝ :=λ t:ℝ , k
 lemma affine_function_def(k:ℝ)(b:ℝ): 
 affine_function k b=λ t:ℝ , b+k*t := by unfold affine_function
 
+/- The following lemmas prove that the affine function is continuously differentiable. -/
+/- In other words, it lies in the C1 space. -/
 lemma affine_is_differentiable(k:ℝ)(b:ℝ):
 ∀ x:ℝ, differentiable_at ℝ (affine_function k b) x :=
 begin
@@ -194,6 +198,7 @@ begin
   exact continuous_on_const,
 end
 
+/- The integral using affine change of variables -/
 lemma affine_change_of_variable_pre (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ)
 (f : ℂ → E)(L:ℝ → ℂ)
 (hf: continuous f)(hld: differentiable ℝ L)
@@ -262,6 +267,7 @@ begin
   exact p,
 end
 
+/- The derivative of a path composed by an affine function -/
 lemma deriv_of_path_affine_comp_pre
 (k:ℝ)(b:ℝ)(f : ℂ → E)(L:ℝ → ℂ)
 (hf: continuous f)(hld: differentiable ℝ L)
@@ -450,6 +456,7 @@ begin
   exact h2,
 end
 
+/- The integral along the path L1∪L2 is equal to the sum of integrals along L1 and L2. -/
 lemma integral_along_piecewise_path(f : ℂ → E) 
 (L1:ℝ → ℂ)(L2:ℝ → ℂ) (hw: L1 1=L2 0) (hf: continuous f)
 (hld1: differentiable ℝ L1)(hl1: continuous (deriv L1))
@@ -727,6 +734,7 @@ begin
   rw ← second_term_of_sum f L2 hf hld2 hl2,
 end
 
+/- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
 lemma integral_along_inverse_path
 {f : ℂ → E} {L:ℝ → ℂ}(hf: continuous f)(hld: differentiable ℝ L) :
 contour_integral f (path_inverse L) = - contour_integral f L :=
@@ -801,14 +809,14 @@ begin
   simp,
 end
 
- -- 线段积分和圆积分
-
+/-- Define line segments and circles on a complex plane. --/
 def line_segment (a:ℂ) (b:ℂ) : ℝ → ℂ :=
   λ (θ : ℝ) , (b-a) * θ + a
 
 def circle_loop(c : ℂ) (R : ℝ) : ℝ → ℂ := 
   λ θ, c + R * complex.exp (θ * 2 * real.pi* complex.I)
 
+/-- The derivative of the inclusion ℝ → ℂ is 1. --/
 lemma coe_has_deriv (x:ℝ ):
 has_deriv_at (λ (t : ℝ), (t : ℂ)) 1 x :=
 begin
@@ -822,6 +830,7 @@ begin
   exact deriv_eq coe_has_deriv,
 end
 
+/-- The line sgement and circle are both continuously differentiable. --/
 lemma deriv_of_line (a:ℂ)(b:ℂ): 
   deriv (line_segment a b)  = constant_path (b-a):=
 begin
@@ -913,6 +922,7 @@ begin
   simp,
 end
 
+/- The contour integral along the sgements with both endpoints being real numbers is equal to the corresponding real integral. -/
 lemma integral_along_reals (f:ℂ → E)(a:ℝ)(b:ℝ):
   contour_integral f (line_segment a b) = ∫ (t: ℝ ) in a..b, f(t):=
 begin
