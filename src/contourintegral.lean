@@ -20,16 +20,16 @@ variables {E : Type}
 def constant_path (z:ℂ):ℝ → ℂ :=λ (t:ℝ ), z 
 
 /-- The path concatenation of two path means compressing their domain [0,1] to [0, 1/2] (and [1/2, 1]) then concate them back to [0,1].-/
-def path_concatenation (L1:ℝ → ℂ)(L2:ℝ →ℂ)
+def path_concatenation {L1:ℝ → ℂ}{L2:ℝ →ℂ}
 (hw: L1 1=L2 0):ℝ → ℂ :=
 λ (t:ℝ), if t<1/2 then L1 (2*t) else L2 (-1+2*t)
 
 /- The inverse of a path is to reverse the direction of a path. -/
 def path_inverse(L:ℝ → ℂ):ℝ → ℂ := λ (t:ℝ ), L(1-t) 
 
-lemma path_concatenation_left(L1:ℝ → ℂ)(L2:ℝ→ℂ )
+lemma path_concatenation_left{L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0){t:ℝ}(ht: t<=2⁻¹):
-path_concatenation L1 L2 hw t = L1 (2*t):=
+path_concatenation hw t = L1 (2*t):=
 begin
   by_cases t<1/2,
   rw path_concatenation,
@@ -46,9 +46,9 @@ begin
   rwa hw,
 end 
 
-lemma path_concatenation_right(L1:ℝ → ℂ)(L2:ℝ→ℂ )
+lemma path_concatenation_right{L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0){t:ℝ}(ht: t>=2⁻¹):
-path_concatenation L1 L2 hw t = L2 (-1+2*t):=
+path_concatenation hw t = L2 (-1+2*t):=
 begin
   rw path_concatenation,
   simp,
@@ -58,16 +58,16 @@ begin
   exact pn p,
 end
 
-lemma path_concactenation_left'(L1:ℝ → ℂ)(L2:ℝ→ℂ )
+lemma path_concatenation_left'{L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0):set.eq_on 
-((λ t:ℝ, path_concatenation L1 L2 hw t):ℝ → ℂ)
+((λ t:ℝ, path_concatenation hw t):ℝ → ℂ)
 ((λ t:ℝ, L1 (2*t)):ℝ → ℂ) (set.interval (0:ℝ) (1/2)):=
 begin
   rw set.eq_on,
   intro x,
   intro in_condition,
   simp at in_condition,
-  exact path_concatenation_left L1 L2 hw in_condition.2,
+  exact path_concatenation_left hw in_condition.2,
 end
 
 lemma frac_1_2 : (1 / 2 : ℝ) ≤ 1 := 
@@ -96,9 +96,23 @@ lemma frac_1_2' : (1 / 2 : ℝ) = (min (1 / 2) 1 : ℝ) :=
     rw if_pos frac_1_2,
   end
 
-lemma path_concactenation_right'(L1:ℝ → ℂ)(L2:ℝ→ℂ )
+lemma path_concatenation_endpoint {L1:ℝ → ℂ}{L2:ℝ→ℂ}
+(hw: L1 1=L2 0): path_concatenation hw 1=L2 1:=
+begin
+  rw path_concatenation,
+  have p:=frac_1_2,
+  simp at p,
+  have m:¬ (1<(1 / 2 : ℝ)):=by {simp,exact p,},
+  ring_nf,
+  simp,
+  intro f,
+  exfalso,
+  finish,
+end
+
+lemma path_concatenation_right'{L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0):set.eq_on 
-((λ t:ℝ, path_concatenation L1 L2 hw t):ℝ → ℂ)
+((λ t:ℝ, path_concatenation hw t):ℝ → ℂ)
 ((λ t:ℝ, L2 (-1+2*t)):ℝ → ℂ) (set.interval (1/2) (1:ℝ)):=
 begin
   rw set.eq_on,
@@ -457,11 +471,11 @@ begin
 end
 
 /- The integral along the path L1∪L2 is equal to the sum of integrals along L1 and L2. -/
-lemma integral_along_piecewise_path(f : ℂ → E) 
-(L1:ℝ → ℂ)(L2:ℝ → ℂ) (hw: L1 1=L2 0) (hf: continuous f)
+lemma integral_along_piecewise_path{f : ℂ → E}
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0) (hf: continuous f)
 (hld1: differentiable ℝ L1)(hl1: continuous (deriv L1))
 (hld2: differentiable ℝ L2)(hl2: continuous (deriv L2)) :
-contour_integral f (path_concatenation L1 L2 hw) = 
+contour_integral f (path_concatenation hw) = 
 contour_integral f L1 + contour_integral f L2 :=
 begin
   unfold contour_integral,
@@ -534,14 +548,14 @@ begin
     continuous.interval_integrable first_cont 0 (1/2),
 
   have first_func : ∀ (t:ℝ), t ∈ (set.Ico (0:ℝ) (1/2)) → 
-  deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)) = deriv (path_concatenation L1 L2 hw) t • 
-    f (path_concatenation L1 L2 hw t) :=
+  deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)) = deriv (path_concatenation hw) t • 
+    f (path_concatenation hw t) :=
   begin
     intro t,
     intro in_condition,
     simp at in_condition,
-    repeat {rw path_concatenation_left L1 L2 hw in_condition.2,},
-    have h1 : deriv (path_concatenation L1 L2 hw) t = deriv (λ (t : ℝ), L1 (2 * t)) t := 
+    repeat {rw path_concatenation_left hw in_condition.2,},
+    have h1 : deriv (path_concatenation hw) t = deriv (λ (t : ℝ), L1 (2 * t)) t := 
       begin 
         apply filter.eventually_eq.deriv_eq,
         unfold filter.eventually_eq,
@@ -552,7 +566,7 @@ begin
           intros x hx,
           simp at hx,
           have h0 : x ≤ 2⁻¹ :=  has_lt.lt.le hx,
-          exact path_concatenation_left L1 L2 hw h0,
+          exact path_concatenation_left hw h0,
         },
         {
           apply and.intro,
@@ -567,11 +581,11 @@ begin
       end,
     rw h1,
     have ht := has_lt.lt.le in_condition.right,
-    rw path_concatenation_left L1 L2 hw ht,
+    rw path_concatenation_left hw ht,
   end,
 
   have first_func' : set.eq_on ((λ x :ℝ, deriv (λ(t:ℝ),L1 (2*t)) x • f (L1 (2 * x))):ℝ→ E)
-  ((λ x :ℝ, deriv (path_concatenation L1 L2 hw) x • f (path_concatenation L1 L2 hw x)):ℝ → E) 
+  ((λ x :ℝ, deriv (path_concatenation hw) x • f (path_concatenation hw x)):ℝ → E) 
   (set.Ico (0:ℝ) (1/2:ℝ)):=
     by {rw set.eq_on, exact first_func,},
 
@@ -622,13 +636,13 @@ begin
     end,
 
   have second_func:∀ (t:ℝ), t∈ (set.Ioc (1/2:ℝ) (1:ℝ))→ 
-  deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) = deriv (path_concatenation L1 L2 hw) t • f (path_concatenation L1 L2 hw t) :=
+  deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) = deriv (path_concatenation hw) t • f (path_concatenation hw t) :=
   begin
     intro t,
     intro in_condition,
     simp at in_condition,
-    repeat {rw path_concatenation_left L1 L2 hw in_condition.2,},
-    have h1 : deriv (path_concatenation L1 L2 hw) t = deriv (λ (t : ℝ), L2 (-1 + 2 * t)) t := 
+    repeat {rw path_concatenation_left hw in_condition.2,},
+    have h1 : deriv (path_concatenation hw) t = deriv (λ (t : ℝ), L2 (-1 + 2 * t)) t := 
       begin 
         apply filter.eventually_eq.deriv_eq,
         unfold filter.eventually_eq,
@@ -639,7 +653,7 @@ begin
           intros x hx,
           simp at hx,
           have h0 : x ≥ 2⁻¹ :=  has_lt.lt.le hx,
-          exact path_concatenation_right L1 L2 hw h0,
+          exact path_concatenation_right hw h0,
         },
         {
           apply and.intro,
@@ -654,10 +668,10 @@ begin
       end,
     rw h1,
     have ht := has_lt.lt.le in_condition.left,
-    rw path_concatenation_right L1 L2 hw ht,
+    rw path_concatenation_right hw ht,
   end,
 
-  have second_func':set.eq_on ((λ t:ℝ,deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) ):ℝ → E) ((λt:ℝ, deriv (path_concatenation L1 L2 hw) t • f (path_concatenation L1 L2 hw t)):ℝ→ E) 
+  have second_func':set.eq_on ((λ t:ℝ,deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) ):ℝ → E) ((λt:ℝ, deriv (path_concatenation hw) t • f (path_concatenation hw t)):ℝ→ E) 
   (set.Ioc (1/2:ℝ) (1:ℝ)):=
     by {rw set.eq_on,exact second_func,},
   
@@ -666,11 +680,11 @@ begin
   --have first_integrable : integrable ((λ(t:ℝ), (deriv L1 t)• f(L1(t))):ℝ → E ) (μ.restrict set.Ioc 0 (1 / 2))
 
   have lhs: 
-    (∫ (t : ℝ) in 0..1/2, deriv (path_concatenation L1 L2 hw) t • f (path_concatenation L1 L2 hw t) ) 
+    (∫ (t : ℝ) in 0..1/2, deriv (path_concatenation hw) t • f (path_concatenation hw t) ) 
     +
-    (∫ (t : ℝ) in 1/2..1, deriv (path_concatenation L1 L2 hw) t • f (path_concatenation L1 L2 hw t) ) 
+    (∫ (t : ℝ) in 1/2..1, deriv (path_concatenation hw) t • f (path_concatenation hw t) ) 
     =
-    ∫ (t : ℝ) in 0..1, deriv (path_concatenation L1 L2 hw) t • f (path_concatenation L1 L2 hw t) 
+    ∫ (t : ℝ) in 0..1, deriv (path_concatenation hw) t • f (path_concatenation hw t) 
     :=
   begin
     apply interval_integral.integral_add_adjacent_intervals,
@@ -718,14 +732,14 @@ begin
 
   rw ←lhs,
   have integral_of_first_func: ∫ (t : ℝ) in 0..1 / 2, 
-  deriv (path_concatenation L1 L2 hw) t • 
-  f (path_concatenation L1 L2 hw t) = ∫ (t : ℝ) in 0..(1/2), 
+  deriv (path_concatenation hw) t • 
+  f (path_concatenation hw t) = ∫ (t : ℝ) in 0..(1/2), 
   deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)):=
     by {rw integral_congr'' h_ first_func',exact real.pi,exact real.pi,},
 
   have integral_of_second_func: ∫ (t : ℝ) in (1/2)..1, 
-  deriv (path_concatenation L1 L2 hw) t • 
-  f (path_concatenation L1 L2 hw t) = ∫ (t : ℝ) in (1/2)..1, 
+  deriv (path_concatenation hw) t • 
+  f (path_concatenation hw t) = ∫ (t : ℝ) in (1/2)..1, 
   deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)):=
     by rw integral_congr' frac_1_2 second_func',
   rw integral_of_first_func,
