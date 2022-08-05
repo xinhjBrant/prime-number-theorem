@@ -1,0 +1,1 @@
+To use the mathlib, run ```leanpkg configure``` in the Terminal.
