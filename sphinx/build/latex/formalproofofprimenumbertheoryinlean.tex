@@ -61,7 +61,7 @@
 
 
 \title{Formal Proof of Prime Number Theory in Lean}
-\date{Jul 31, 2022}
+\date{Aug 05, 2022}
 \release{v0}
 \author{}
 \newcommand{\sphinxlogo}{\vbox{}}
@@ -84,8 +84,34 @@
 \chapter{Definitions}
 \label{\detokenize{Blueprint/Definitions:definitions}}\label{\detokenize{Blueprint/Definitions::doc}}
 
+\chapter{Contour Integral}
+\label{\detokenize{Blueprint/Contour_Integral:contour-integral}}\label{\detokenize{Blueprint/Contour_Integral::doc}}
+
+\section{I. Definitions of Paths}
+\label{\detokenize{Blueprint/Contour_Integral:i-definitions-of-paths}}
+\sphinxAtStartPar
+A path is a differentiable function \(f : \mathbb{R}\to \mathbb{C}\) with a continuous derivative, defined on \(\mathbb{R}\), but we only consider their values on {[}0,1{]}.
+\begin{description}
+\item[{Constant Paths}] \leavevmode
+\sphinxAtStartPar
+For example, for any fixed point \(z : \mathbb{C}\) we have a constant path \(\lambda (t : \mathbb{R}), z\).
+
+\item[{Inverse of Paths}] \leavevmode
+\sphinxAtStartPar
+The inverse of a path is to reverse the direction of a path.
+
+\sphinxAtStartPar
+For example, given a path \(L: \mathbb{R}\to \mathbb{C}\), we define the inverse of the path as \(\lambda (t:\mathbb{R}), L(1-t)\).
+
+\end{description}
+
+
 \chapter{Indices and tables}
 \label{\detokenize{index:indices-and-tables}}\begin{itemize}
+\item {} 
+\sphinxAtStartPar
+pdf download : \sphinxhref{../latex/formalproofofprimenumbertheoryinlean.pdf}{pdf}
+
 \item {} 
 \sphinxAtStartPar
 \DUrole{xref,std,std-ref}{genindex}

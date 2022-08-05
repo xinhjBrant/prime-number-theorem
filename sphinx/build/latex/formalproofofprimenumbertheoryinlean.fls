@@ -1062,6 +1062,12 @@ INPUT ./formalproofofprimenumbertheoryinlean.toc
 INPUT formalproofofprimenumbertheoryinlean.toc
 INPUT formalproofofprimenumbertheoryinlean.toc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/tex-gyre/ec-qtmb.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam7.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam5.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm
 OUTPUT formalproofofprimenumbertheoryinlean.toc
 INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/tex-gyre/ts1qtm.fd
 INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/tex-gyre/ts1qtm.fd
@@ -1075,8 +1081,12 @@ INPUT formalproofofprimenumbertheoryinlean.ind
 INPUT formalproofofprimenumbertheoryinlean.aux
 INPUT ./formalproofofprimenumbertheoryinlean.out
 INPUT ./formalproofofprimenumbertheoryinlean.out
-INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/tex-gyre/q-ec.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/tex-gyre/q-ts1.enc
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/tex-gyre/q-ec.enc
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qhvb.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qhvbi.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qtmb.pfb
