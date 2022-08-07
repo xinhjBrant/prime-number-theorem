@@ -750,7 +750,7 @@ end
 
 /- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
 lemma integral_along_inverse_path
-{f : ℂ → E} {L:ℝ → ℂ}(hf: continuous f)(hld: differentiable ℝ L) :
+{f : ℂ → E} {L:ℝ → ℂ}(hf: continuous f) :
 contour_integral f (path_inverse L) = - contour_integral f L :=
 begin
   unfold contour_integral,
@@ -764,8 +764,6 @@ begin
     intro x,
     simp,
     end,
-  have hld':∀ x:ℝ, differentiable_at ℝ L (h x):=
-    by {intro x, exact hld (h x),},
   have deriv_h_eq_h':  deriv h = h':=
     begin
       ext1,
@@ -788,8 +786,24 @@ begin
     begin
       intro x,
       rw Lh,
-      rw deriv.scomp x (hld' x) (h_diff x),
+      have dcond: (differentiable_at ℝ L (h x)) ∨ 
+        ¬ (differentiable_at ℝ L (h x)) := em (differentiable_at ℝ L (h x)),
+      cases dcond,
+      rw deriv.scomp x (dcond) (h_diff x),
       simp,
+      have dlhx: deriv L (h x) = 0 :=deriv_zero_of_not_differentiable_at dcond,
+      have dlhx': (-deriv L∘ h)x = 0 :=by {simp,exact dlhx,},
+      rw dlhx',
+      apply deriv_zero_of_not_differentiable_at,
+      intro drlhx,
+      have Lhh : L = (L∘ h)∘ h:= by {ext1, rw h_def, simp,},
+      have hhx: h (h x) = x:= by {rw h_def,simp,},
+      rw Lhh at dcond,
+      apply dcond,
+      apply differentiable_at.comp,
+      rw hhx,
+      exact drlhx,
+      exact h_diff (h x),
     end, 
   have L1_minus_t_der: 
     deriv ((λ (t:ℝ), L(1-t))) = - (deriv L) ∘ h :=
