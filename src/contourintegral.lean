@@ -162,6 +162,34 @@ def constant_real_function(k:ℝ):ℝ→ ℝ :=λ t:ℝ , k
 lemma affine_function_def(k:ℝ)(b:ℝ): 
 affine_function k b=λ t:ℝ , b+k*t := by unfold affine_function
 
+lemma inverse_of_affine{k:ℝ}(hk: k≠ 0)(b:ℝ)(x:ℝ):
+(affine_function k b) ((affine_function k⁻¹ (-b/k)) x) = x :=
+begin 
+  repeat {rw affine_function,},
+  simp,
+  rw mul_add,
+  rw ← mul_assoc,
+  have kkinv: k * k⁻¹=1 :=mul_inv_cancel hk,
+  rw kkinv,
+  have kbk: k*(-b/k)=-b := 
+    by {ring_nf,rw mul_comm, rw ← mul_assoc, rw kkinv, ring_nf,},
+  rw kbk,
+  ring_nf,
+end
+
+lemma inverse_of_affine'{k:ℝ}(hk: k≠ 0)(b:ℝ)(x:ℝ):
+(affine_function k⁻¹ (-b/k)) ((affine_function k b) x) = x  :=
+begin 
+  repeat {rw affine_function,},
+  simp,
+  rw mul_add,
+  rw ← mul_assoc,
+  have kkinv: k⁻¹ * k =1 :=inv_mul_cancel hk,
+  rw kkinv,
+  simp, rw ← add_assoc,
+  ring_nf,
+end
+
 /- The following lemmas prove that the affine function is continuously differentiable. -/
 /- In other words, it lies in the C1 space. -/
 lemma affine_is_differentiable(k:ℝ)(b:ℝ):
@@ -283,29 +311,46 @@ end
 
 /- The derivative of a path composed by an affine function -/
 lemma deriv_of_path_affine_comp_pre
-(k:ℝ)(b:ℝ)(f : ℂ → E)(L:ℝ → ℂ)
-(hf: continuous f)(hld: differentiable ℝ L)
-(hl: continuous (deriv L)):
+(k:ℝ)(b:ℝ){f : ℂ → E}(L:ℝ → ℂ)(hf: continuous f):
 deriv (L ∘ (affine_function k b)) 
 = (deriv (affine_function k b)) 
 • (deriv L ∘ (affine_function k b)):=
 begin
+  have hk: k = 0 ∨ k ≠ 0 := em (k = 0),
+  cases hk, rw hk, ext1,
+  rw affine_function, simp,
   ext1,
-  have p:differentiable_at ℝ L ((affine_function k b) x):=
-    by exact hld (affine_function k b x),
   have q:differentiable_at ℝ (affine_function k b) x 
     :=affine_is_differentiable k b x,
-  exact deriv.scomp x p q,
+  have dcond:
+  differentiable_at ℝ L ((affine_function k b) x) 
+  ∨ ¬ differentiable_at ℝ L ((affine_function k b) x) :=
+    em (differentiable_at ℝ L ((affine_function k b) x) ),
+  cases dcond,
+  exact deriv.scomp x dcond q,
+  simp,
+  have dlhx: deriv L ((affine_function k b) x) = 0 :=
+    deriv_zero_of_not_differentiable_at dcond,
+  rw dlhx,
+  simp,
+  apply deriv_zero_of_not_differentiable_at,
+  intro drlhx,
+  have Lhh: L= (L∘ (affine_function k b)) ∘ 
+    (affine_function k⁻¹ (-b/k)) :=
+    by {ext1,simp,rw inverse_of_affine hk b _,},
+  rw Lhh at dcond,
+  apply dcond, apply differentiable_at.comp,
+  rw inverse_of_affine' hk b _,
+  exact drlhx,
+  exact affine_is_differentiable' _ _ _,
 end  
 
 lemma deriv_of_path_affine_comp
-(k:ℝ)(b:ℝ)(f : ℂ → E)(L:ℝ → ℂ)
-(hf: continuous f)(hld: differentiable ℝ L)
-(hl: continuous (deriv L)):
+(k:ℝ)(b:ℝ){f : ℂ → E}(L:ℝ → ℂ)(hf: continuous f):
 deriv (L ∘ (affine_function k b)) 
 = k • (deriv L ∘ (affine_function k b)):=
 begin
-  have p:=deriv_of_path_affine_comp_pre k b f L hf hld hl,
+  have p:=deriv_of_path_affine_comp_pre k b L hf,
   rw deriv_of_affine k b at p,
   exact p,
 end
@@ -320,7 +365,7 @@ lemma affine_change_of_variable' (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ)
   deriv L t • f (L t) :=
 begin
   rw ← affine_change_of_variable k b lep rep f L hf hld hl,
-  rw deriv_of_path_affine_comp k b f L hf hld hl,
+  rw deriv_of_path_affine_comp k b L hf,
   rw affine_function,
   simp,
   have rhs1: k • ∫ (t : ℝ) in lep..rep, deriv L (b + k * t) • f (L (b + k * t))
