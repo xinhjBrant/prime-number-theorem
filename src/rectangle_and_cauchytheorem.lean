@@ -4,28 +4,6 @@ noncomputable theory
 variables {E : Type} 
 [normed_group E] [normed_space ℂ E] [complete_space E] 
 
-/-- Before everything: Convert types -/
-lemma smul_type_convert (a:ℝ)(b:E):
-  (a:ℂ)• b = a • b :=
-begin
-  simp,
-end
-
-lemma smul_integral_convert {α:ℂ}{a:ℝ}{b:ℝ}{g:ℝ→ E}:
-  α • ∫ (t: ℝ) in a..b, g t = ∫ (t: ℝ) in a..b, α • g t :=
-begin
-  simp,
-end
-
-lemma smul_assoc_convert {α:ℂ}{a:ℂ}{b:E}:
-  (α * a) • b = α • a • b :=
-begin
-  have p1: (α * a) • b = (α • a) • b := by simp,
-  have p2: (α • a) • b = α • (a • b) := by apply smul_assoc,
-  rw p1,
-  rw p2,
-end
-
 /-- Part I. Define line segments -/
 def line_segment (a:ℂ) (b:ℂ) : ℝ → ℂ :=
   λ (θ : ℝ) , (b-a) * θ + a
