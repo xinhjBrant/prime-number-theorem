@@ -13,6 +13,8 @@ open asymptotics filter real nat.arithmetic_function
 
 local notation `π` := nat.prime_counting
 
+lemma pi_def (x : ℝ) : (π ⌊x⌋₊ : ℝ) = ∑ n in (finset.range (⌊x⌋₊ + 1)).filter nat.prime, 1:= sorry
+
 def at_top_within (s : set ℝ) : filter ℝ := at_top ⊓ 𝓟 s
 
 local notation `⊤[>` x `] `:100 := at_top_within (set.Ioi x)
@@ -23,6 +25,66 @@ theorem prime_number_theorem : is_O_with 1 ⊤[>1] (λ x, (π ⌊x⌋₊ : ℝ))
 
 /-! from unit_fractions.basic_estimation-/
 notation `ϑ` := chebyshev_first
+
+lemma lift_ite {a : ℕ} : (ite (nat.prime a) 1 0 : ℝ) = (λ x : ℕ, (ite (nat.prime x) 1 0 : ℝ)) a := rfl
+
+lemma theta_lower_bound (ε x : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2)(hx : 1 < x) : (1 - ε) * ((π ⌊x⌋₊ : ℝ) - (π ⌊x ^ (1 - ε)⌋₊ : ℝ)) * log x ≤ ϑ x := 
+begin
+  unfold chebyshev_first,
+  -- have hle : ⌊x⌋₊ + 1 ≤ ⌊x ^ (1 - ε)⌋₊ + 1 := sorry,
+  repeat {rw pi_def},
+  rw [mul_comm], 
+  rw ←mul_assoc,
+  rw ←le_div_iff',
+  have h2 : ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), (1 : ℝ) - ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), (1 : ℝ) ≤ ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), (1 : ℝ) := 
+  begin
+    apply sub_le_self _,
+    {
+      have h : (0 : ℝ) = ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), 0 := by simp,
+      rw h,
+      apply finset.sum_le_sum,
+      intros x hx,
+      simp,
+    },
+    exact has_add.to_covariant_class_left ℝ,
+    exact has_add.to_covariant_class_right ℝ,
+  end,
+  have h3 : ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), (1 : ℝ) ≤ ((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) / (log x * (1 - ε))) := 
+    begin
+      rw finset.sum_div,
+      apply finset.sum_le_sum,
+      intros n hn,
+      sorry
+    end,
+  exact le_trans h2 h3,
+  have h4 : 0 < log x := log_pos hx,
+  apply (zero_lt_mul_left h4).mpr,
+  rw lt_sub,
+  simp,
+  calc
+  ε ≤ 1 / 2 : hε.2
+  ... < 1 : one_half_lt_one,
+end
+
+lemma theta_upper_bound (x : ℝ)(hx : 1 < x) : ϑ x ≤ (π ⌊x⌋₊ : ℝ) * log x := 
+begin
+  unfold chebyshev_first,
+  rw [pi_def, finset.sum_mul],
+  apply finset.sum_le_sum,
+  intros i ih,
+  simp at ih,
+  simp,
+  rw [nat.lt_succ_iff, nat.le_floor_iff] at ih,
+  rw real.log_le_log,
+  exact ih.1,
+  simp,
+  calc
+  0 < 2 : by simp
+  ... ≤ i : (nat.prime_def_lt.mp ih.2).1,
+  exact lt_trans one_pos hx,
+  apply le_of_lt,
+  exact lt_trans one_pos hx,
+end
 
 #check chebyshev_first_trivial_bound
 
@@ -53,8 +115,10 @@ begin
   sorry,
 end
 
-lemma theta_lower_bound (ε : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2): ∀ᶠ (x : ℝ) in ⊤[>1], (1 - ε) * (π ⌊x⌋₊ : ℝ) * log x ≤ ϑ x := sorry
+lemma pi_lower_bound (ε : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2) : ∀ᶠ (x : ℝ) in ⊤[>1], (1 - ε) * (π ⌊x⌋₊ : ℝ) ≤ (π ⌊x⌋₊ : ℝ) - (π ⌊x ^ (1 - ε)⌋₊ : ℝ) := sorry
 
-lemma theta_upper_bound : ∀ᶠ (x : ℝ) in ⊤[>1], ϑ x ≤ (π ⌊x⌋₊ : ℝ) * log x := sorry
+lemma theta_lower_bound' (ε : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2): ∀ᶠ (x : ℝ) in ⊤[>1], (1 - ε) * (π ⌊x⌋₊ : ℝ) * log x ≤ ϑ x := sorry
+
+lemma theta_upper_bound' : ∀ᶠ (x : ℝ) in ⊤[>1], ϑ x ≤ (π ⌊x⌋₊ : ℝ) * log x := sorry
 
 theorem pi_theta : is_O_with 1 ⊤[>1] ϑ id → is_O_with 1 at_top (λ x, (π ⌊x⌋₊ : ℝ)) (λ x : ℝ, x / log x) := sorry
