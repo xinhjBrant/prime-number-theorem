@@ -13,6 +13,28 @@ noncomputable theory
 variables {E : Type} 
 [normed_group E] [normed_space ℂ E] [complete_space E] 
 
+/-- Before everything: Convert types -/
+lemma smul_type_convert (a:ℝ)(b:E):
+  (a:ℂ)• b = a • b :=
+begin
+  simp,
+end
+
+lemma smul_integral_convert {α:ℂ}{a:ℝ}{b:ℝ}{g:ℝ→ E}:
+  α • ∫ (t: ℝ) in a..b, g t = ∫ (t: ℝ) in a..b, α • g t :=
+begin
+  simp,
+end
+
+lemma smul_assoc_convert {α:ℂ}{a:ℂ}{b:E}:
+  (α * a) • b = α • a • b :=
+begin
+  have p1: (α * a) • b = (α • a) • b := by simp,
+  have p2: (α • a) • b = α • (a • b) := by apply smul_assoc,
+  rw p1,
+  rw p2,
+end
+
 /-! We define the path as a differentiable function f : ℝ → ℂ with a continuous derivative,
  defined on ℝ but we only use their value on [0,1]. -/
 
@@ -240,6 +262,52 @@ begin
   exact continuous_on_const,
 end
 
+/- The derivative of a path composed by an affine function -/
+lemma deriv_of_path_affine_comp_pre
+(k:ℝ)(b:ℝ)(L:ℝ → ℂ):
+deriv (L ∘ (affine_function k b)) 
+= (deriv (affine_function k b)) 
+• (deriv L ∘ (affine_function k b)):=
+begin
+  have hk: k = 0 ∨ k ≠ 0 := em (k = 0),
+  cases hk, rw hk, ext1,
+  rw affine_function, simp,
+  ext1,
+  have q:differentiable_at ℝ (affine_function k b) x 
+    :=affine_is_differentiable k b x,
+  have dcond:
+  differentiable_at ℝ L ((affine_function k b) x) 
+  ∨ ¬ differentiable_at ℝ L ((affine_function k b) x) :=
+    em (differentiable_at ℝ L ((affine_function k b) x) ),
+  cases dcond,
+  exact deriv.scomp x dcond q,
+  simp,
+  have dlhx: deriv L ((affine_function k b) x) = 0 :=
+    deriv_zero_of_not_differentiable_at dcond,
+  rw dlhx,
+  simp,
+  apply deriv_zero_of_not_differentiable_at,
+  intro drlhx,
+  have Lhh: L= (L∘ (affine_function k b)) ∘ 
+    (affine_function k⁻¹ (-b/k)) :=
+    by {ext1,simp,rw inverse_of_affine hk b _,},
+  rw Lhh at dcond,
+  apply dcond, apply differentiable_at.comp,
+  rw inverse_of_affine' hk b _,
+  exact drlhx,
+  exact affine_is_differentiable' _ _ _,
+end  
+
+lemma deriv_of_path_affine_comp
+(k:ℝ)(b:ℝ)(L:ℝ → ℂ):
+deriv (L ∘ (affine_function k b)) 
+= k • (deriv L ∘ (affine_function k b)):=
+begin
+  have p:=deriv_of_path_affine_comp_pre k b L,
+  rw deriv_of_affine k b at p,
+  exact p,
+end
+
 /- The integral using affine change of variables -/
 lemma affine_change_of_variable_pre (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ)
 (f : ℂ → E)(L:ℝ → ℂ)
@@ -309,52 +377,6 @@ begin
   exact p,
 end
 
-/- The derivative of a path composed by an affine function -/
-lemma deriv_of_path_affine_comp_pre
-(k:ℝ)(b:ℝ){f : ℂ → E}(L:ℝ → ℂ)(hf: continuous f):
-deriv (L ∘ (affine_function k b)) 
-= (deriv (affine_function k b)) 
-• (deriv L ∘ (affine_function k b)):=
-begin
-  have hk: k = 0 ∨ k ≠ 0 := em (k = 0),
-  cases hk, rw hk, ext1,
-  rw affine_function, simp,
-  ext1,
-  have q:differentiable_at ℝ (affine_function k b) x 
-    :=affine_is_differentiable k b x,
-  have dcond:
-  differentiable_at ℝ L ((affine_function k b) x) 
-  ∨ ¬ differentiable_at ℝ L ((affine_function k b) x) :=
-    em (differentiable_at ℝ L ((affine_function k b) x) ),
-  cases dcond,
-  exact deriv.scomp x dcond q,
-  simp,
-  have dlhx: deriv L ((affine_function k b) x) = 0 :=
-    deriv_zero_of_not_differentiable_at dcond,
-  rw dlhx,
-  simp,
-  apply deriv_zero_of_not_differentiable_at,
-  intro drlhx,
-  have Lhh: L= (L∘ (affine_function k b)) ∘ 
-    (affine_function k⁻¹ (-b/k)) :=
-    by {ext1,simp,rw inverse_of_affine hk b _,},
-  rw Lhh at dcond,
-  apply dcond, apply differentiable_at.comp,
-  rw inverse_of_affine' hk b _,
-  exact drlhx,
-  exact affine_is_differentiable' _ _ _,
-end  
-
-lemma deriv_of_path_affine_comp
-(k:ℝ)(b:ℝ){f : ℂ → E}(L:ℝ → ℂ)(hf: continuous f):
-deriv (L ∘ (affine_function k b)) 
-= k • (deriv L ∘ (affine_function k b)):=
-begin
-  have p:=deriv_of_path_affine_comp_pre k b L hf,
-  rw deriv_of_affine k b at p,
-  exact p,
-end
-
 lemma affine_change_of_variable' (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ)
 (f : ℂ → E)(L:ℝ → ℂ)
 (hf: continuous f)(hld: differentiable ℝ L)
@@ -365,7 +387,7 @@ lemma affine_change_of_variable' (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ)
   deriv L t • f (L t) :=
 begin
   rw ← affine_change_of_variable k b lep rep f L hf hld hl,
-  rw deriv_of_path_affine_comp k b L hf,
+  rw deriv_of_path_affine_comp k b L,
   rw affine_function,
   simp,
   have rhs1: k • ∫ (t : ℝ) in lep..rep, deriv L (b + k * t) • f (L (b + k * t))
@@ -387,32 +409,60 @@ begin
   rw im3,
 end
 
-lemma first_term_of_sum(f : ℂ → E)
-(L1:ℝ → ℂ)(hf: continuous f)(hld: differentiable ℝ L1)
-(hl: continuous (deriv L1)): 
+lemma genearl_term_of_sum' (f : ℂ → E)(L:ℝ → ℂ)
+(k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ):
+∫ (t : ℝ) in b+k*lep..b+k*rep, deriv L t • f (L t) 
+= ∫ (t : ℝ) in lep..rep, 
+deriv (L ∘ (affine_function k b)) t • f (L (b+k*t)):=
+begin
+  rw deriv_of_path_affine_comp,
+  rw ← interval_integral.smul_integral_comp_add_mul _ k b,
+  rw affine_function,
+  simp,
+  have p1: (λ t:ℝ, (↑k * deriv L (b + k * t)) • 
+  f (L (b + k * t))) = (λ t:ℝ, 
+  ↑k •  deriv L (b + k * t) • f (L (b + k * t))):=
+    by {ext1, rw smul_assoc_convert,},
+  rw p1,
+  rw ← smul_integral_convert,
+  simp,
+end
+
+lemma genearl_term_of_sum (f : ℂ → E)(L:ℝ → ℂ)
+(k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ):
+∫ (t : ℝ) in b+k*lep..b+k*rep, deriv L t • f (L t) 
+= ∫ (t : ℝ) in lep..rep, 
+deriv (λ(t:ℝ), L(b+k*t)) t • f (L (b+k*t)) :=
+begin
+  have p:deriv (λ(t:ℝ), L(b+k*t))
+    = deriv (L ∘ (affine_function k b)) :=
+    by {ext1,rw affine_function,},
+  rw p,
+  exact genearl_term_of_sum' _ _ _ _ _ _,
+end
+
+lemma first_term_of_sum(f : ℂ → E)(L1:ℝ → ℂ): 
 ∫ (t : ℝ) in 0..1, deriv L1 t • f (L1 t) 
 = ∫ (t : ℝ) in 0..1/2, 
 deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)) :=
 begin
-  have p:=affine_change_of_variable' 2 0 0 (1/2) f L1 hf hld hl,
-  rw affine_function at p,
-  simp at *,
-  rw ← p, 
+  have p:(λ t:ℝ,deriv (λ(x:ℝ),L1 (2*x)) t • f (L1 (2*t)))
+  =(λ t:ℝ,deriv (λ(x:ℝ),L1 (0+2*x)) t • f (L1 (0+2*t))) := 
+    by simp,
+  rw p,
+  rw ← genearl_term_of_sum f L1 2 0 0 (1/2),
+  simp,
 end
 
-lemma second_term_of_sum(f : ℂ → E) 
-(L2:ℝ → ℂ) (hf: continuous f)(hld: differentiable ℝ L2)
-(hl: continuous (deriv L2)): 
+lemma second_term_of_sum(f : ℂ → E)(L2:ℝ → ℂ): 
 ∫ (t : ℝ) in 0..1, deriv L2 t • f (L2 t) 
 = ∫ (t : ℝ) in (1/2)..1, 
 deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) :=
 begin
-  have p:=affine_change_of_variable' 2 (-1) (1/2) 1 f L2 hf hld hl,
-  rw affine_function at p,
-  simp at *,
+  rw ← genearl_term_of_sum f L2 2 (-1) (1/2) 1,
+  simp,
   have q: (-1)+2 = (1:ℝ) :=by ring,
-  rw q at p,
-  rw ← p, 
+  rw q,
 end
 
 universes u v
@@ -529,7 +579,6 @@ begin
     by exact differentiable.continuous hld1,
   have l1_cont': continuous (λ (t : ℝ), L1 (2 * t)) := 
     begin
-      have l1_cont: continuous L1 := by exact differentiable.continuous hld1,
       apply continuous.comp l1_cont,
       have diff : differentiable ℝ (λ (x : ℝ), 2 * x) := begin intro x, simp, end,
       exact differentiable.continuous diff,
@@ -789,8 +838,8 @@ begin
     by rw integral_congr' frac_1_2 second_func',
   rw integral_of_first_func,
   rw integral_of_second_func,
-  rw ← first_term_of_sum f L1 hf hld1 hl1,
-  rw ← second_term_of_sum f L2 hf hld2 hl2,
+  rw ← first_term_of_sum f L1,
+  rw ← second_term_of_sum f L2,
 end
 
 /- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
