@@ -15,7 +15,7 @@ variables {E : Type}
 [normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
 /-- Part O. Convert types -/
-lemma smul_type_convert (a:ℝ)(b:E):
+@[simp] lemma smul_type_convert (a:ℝ)(b:E):
   (a:ℂ)• b = a • b :=
 begin
   simp,
@@ -38,9 +38,9 @@ end
 
 /-- Part O'. About 2⁻¹  -/
 
-lemma zero_leq_frac_1_2: 0≤ (2⁻¹ : ℝ) := by simp
+@[simp] lemma zero_leq_frac_1_2: 0≤ (2⁻¹ : ℝ) := by simp
 
-lemma frac_1_2 : (2⁻¹ : ℝ) ≤ 1 := 
+@[simp] lemma frac_1_2 : (2⁻¹ : ℝ) ≤ 1 := 
   begin
     have h0 : (1 : ℕ) ≤ (2 : ℕ) := by simp,
     have h1 : (1 : ℝ) ≤ (2 : ℝ) :=
@@ -58,16 +58,16 @@ lemma frac_1_2 : (2⁻¹ : ℝ) ≤ 1 :=
     exact h4,
   end
 
-lemma frac_1_2' : (min 2⁻¹ 1 : ℝ) = (2⁻¹ : ℝ) := 
+@[simp] lemma frac_1_2' : (min 2⁻¹ 1 : ℝ) = (2⁻¹ : ℝ) := 
   min_eq_left frac_1_2
 
-lemma frac_1_2'': (max 2⁻¹ 1 : ℝ) = (1 : ℝ) :=
+@[simp] lemma frac_1_2'': (max 2⁻¹ 1 : ℝ) = (1 : ℝ) :=
   max_eq_right frac_1_2
 
-lemma Iiohalf:{a : ℝ | a < 2⁻¹}=set.Iio 2⁻¹ :=
+@[simp] lemma Iiohalf:{a : ℝ | a < 2⁻¹}=set.Iio 2⁻¹ :=
   by rw set.Iio
 
-lemma Icchalfone: set.interval (2⁻¹:ℝ) 1 = set.Icc (2⁻¹:ℝ) 1 :=
+@[simp] lemma Icchalfone: set.interval (2⁻¹:ℝ) 1 = set.Icc (2⁻¹:ℝ) 1 :=
   by {rw set.interval, rw frac_1_2', rw frac_1_2'',}
 
 lemma frac_1_2_inclustion_left : 
@@ -78,7 +78,7 @@ lemma frac_1_2_inclustion_left :
 
 lemma frac_1_2_inclusion_right :
   (set.interval (2⁻¹:ℝ) 1)⊆ (set.interval 0 (1:ℝ)) :=
-  by {simp, rw Icchalfone, repeat {rw set.Icc,}, simp,
+  by {simp, repeat {rw set.Icc,}, simp,
       intros a p q, split, 
       exact le_trans zero_leq_frac_1_2 p, exact q,}
 
@@ -220,10 +220,11 @@ begin
   exact p,
 end
 
-/-- Part I. Define paths and relevant basic operations -/
+/-! Part I. Define paths and relevant basic operations 
 
-/- ! We define the path as a differentiable function f : ℝ → ℂ with a continuous derivative,
- defined on ℝ but we only use their value on [0,1]. -/
+- # Path
+A path is any function L defined as ℝ → ℂ
+-/
 
 def constant_path (z:ℂ):ℝ → ℂ :=λ (t:ℝ ), z 
 
@@ -232,15 +233,15 @@ def path_concatenation {L1:ℝ → ℂ}{L2:ℝ →ℂ}
 (hw: L1 1=L2 0):ℝ → ℂ :=
 λ (t:ℝ), if t<2⁻¹ then L1 (2*t) else L2 (-1+2*t)
 
-/- The inverse of a path is to reverse the direction of a path. -/
+/-- The inverse of a path is to reverse the direction of a path. -/
 def path_inverse(L:ℝ → ℂ):ℝ → ℂ := λ (t:ℝ ), L(1-t) 
 
 lemma path_concatenation_left{L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0){t:ℝ}(ht: t<=2⁻¹):
 path_concatenation hw t = L1 (2*t):=
 begin
-  by_cases t<2⁻¹,
   rw path_concatenation,
+  by_cases t<2⁻¹,
   simp,
   intro p,
   exfalso,
@@ -249,7 +250,6 @@ begin
   simp at *,
   have hh: t=2⁻¹:=by {exact ge_antisymm h ht},
   rw hh,
-  rw path_concatenation,
   simp,
   rwa hw,
 end 
@@ -282,8 +282,7 @@ lemma path_concatenation_endpoint {L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0): path_concatenation hw 1=L2 1:=
 begin
   rw path_concatenation,
-  have p:=frac_1_2,
-  have m:¬ (1<(2⁻¹ : ℝ)):=by {simp,exact p,},
+  have m:¬ (1<(2⁻¹ : ℝ)):=by simp,
   ring_nf,
   simp,
   intro f,
@@ -304,8 +303,7 @@ begin
   rw set.interval at in_condition,
   have h0 : (min 2⁻¹ 1 : ℝ) ≤ x := and.elim_left ((iff.elim_left set.mem_Icc) in_condition),
   have h4 : 2⁻¹ ≤ x := 
-    calc 2⁻¹ = (2⁻¹: ℝ) : by ring
-    ... = (min 2⁻¹ 1 : ℝ) : by rw frac_1_2'
+    calc 2⁻¹ = (min 2⁻¹ 1 : ℝ) : by simp
     ... ≤ x : h0,
   exact h4,
 end
@@ -442,13 +440,7 @@ begin
   rw ← interval_integral.smul_integral_comp_add_mul _ k b,
   rw affine_function,
   simp,
-  have p1: (λ t:ℝ, (↑k * deriv L (b + k * t)) • 
-  f (L (b + k * t))) = (λ t:ℝ, 
-  ↑k •  deriv L (b + k * t) • f (L (b + k * t))):=
-    by {ext1, rw smul_assoc_convert,},
-  rw p1,
-  rw ← smul_integral_convert,
-  simp,
+  simp [smul_assoc_convert],
 end
 
 lemma genearl_term_of_sum (f : ℂ → E)(L:ℝ → ℂ)
