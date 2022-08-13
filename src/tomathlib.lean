@@ -1,4 +1,5 @@
 import tactic
+import analysis.normed_space.basic
 import analysis.complex.basic
 import analysis.calculus.deriv
 import measure_theory.integral.interval_integral
@@ -15,7 +16,7 @@ lemma eventually_nhds_eq_iff {a : α} {f g : α → β} :
   mem_nhds_iff.trans $ by simp only [set.subset_def, exists_prop, set.mem_set_of_eq]
 
 variables {E : Type} 
-[normed_group E] [normed_space ℂ E] [complete_space E] 
+[normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
 lemma interval_integrable_iff_integrable_Ico_of_le {μ:measure_theory.measure ℝ}
 {f : ℝ → E} {a b : ℝ} (hab : a ≤ b) [measure_theory.has_no_atoms μ] :

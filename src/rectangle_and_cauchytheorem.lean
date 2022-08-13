@@ -2,7 +2,7 @@ import contourintegral
 noncomputable theory
 
 variables {E : Type} 
-[normed_group E] [normed_space ℂ E] [complete_space E] 
+[normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
 /-- Part I. Define line segments -/
 def line_segment (a:ℂ) (b:ℂ) : ℝ → ℂ :=
