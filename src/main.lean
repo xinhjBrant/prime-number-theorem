@@ -54,7 +54,9 @@ begin
       rw finset.sum_div,
       apply finset.sum_le_sum,
       intros n hn,
-      sorry
+      simp at hn,
+      rw one_le_div _,
+      repeat{sorry}
     end,
   exact le_trans h2 h3,
   have h4 : 0 < log x := log_pos hx,
