@@ -236,6 +236,18 @@ def path_concatenation {L1:ℝ → ℂ}{L2:ℝ →ℂ}
 /-- The inverse of a path is to reverse the direction of a path. -/
 def path_inverse(L:ℝ → ℂ):ℝ → ℂ := λ (t:ℝ ), L(1-t) 
 
+lemma path_concatenation_endpoint {L1:ℝ → ℂ}{L2:ℝ→ℂ}
+(hw: L1 1=L2 0): path_concatenation hw 1=L2 1:=
+begin
+  rw path_concatenation,
+  have m:¬ (1<(2⁻¹ : ℝ)):=by simp,
+  ring_nf,
+  simp,
+  intro f,
+  exfalso,
+  finish,
+end
+
 lemma path_concatenation_left{L1:ℝ → ℂ}{L2:ℝ→ℂ}
 (hw: L1 1=L2 0){t:ℝ}(ht: t<=2⁻¹):
 path_concatenation hw t = L1 (2*t):=
@@ -267,37 +279,25 @@ begin
 end
 
 lemma path_concatenation_left'{L1:ℝ → ℂ}{L2:ℝ→ℂ}
-(hw: L1 1=L2 0):set.eq_on 
+(hw: L1 1=L2 0):set.eq_on ((λ t:ℝ, L1 (2*t)):ℝ → ℂ) 
 ((λ t:ℝ, path_concatenation hw t):ℝ → ℂ)
-((λ t:ℝ, L1 (2*t)):ℝ → ℂ) (set.interval (0:ℝ) 2⁻¹):=
+(set.interval (0:ℝ) 2⁻¹):=
 begin
   rw set.eq_on,
   intro x,
   intro in_condition,
-  simp at in_condition,
+  simp at in_condition, symmetry,
   exact path_concatenation_left hw in_condition.2,
 end
 
-lemma path_concatenation_endpoint {L1:ℝ → ℂ}{L2:ℝ→ℂ}
-(hw: L1 1=L2 0): path_concatenation hw 1=L2 1:=
-begin
-  rw path_concatenation,
-  have m:¬ (1<(2⁻¹ : ℝ)):=by simp,
-  ring_nf,
-  simp,
-  intro f,
-  exfalso,
-  finish,
-end
-
 lemma path_concatenation_right'{L1:ℝ → ℂ}{L2:ℝ→ℂ}
-(hw: L1 1=L2 0):set.eq_on 
+(hw: L1 1=L2 0):set.eq_on ((λ t:ℝ, L2 (-1+2*t)):ℝ → ℂ) 
 ((λ t:ℝ, path_concatenation hw t):ℝ → ℂ)
-((λ t:ℝ, L2 (-1+2*t)):ℝ → ℂ) (set.interval 2⁻¹ (1:ℝ)):=
+(set.interval 2⁻¹ (1:ℝ)):=
 begin
   rw set.eq_on,
   intro x,
-  intro in_condition,
+  intro in_condition, symmetry,
   apply path_concatenation_right,
   rw[ge],
   rw set.interval at in_condition,
@@ -405,6 +405,118 @@ begin
       by {ext1, rw affine_function, },
     rw p,
     exact continuous.comp hl2c (affine_is_continuous _ _),
+  },
+end
+
+lemma deriv_eq_on{f:ℝ→ ℂ}{g:ℝ→ ℂ}{a b:ℝ}(hab:a≤ b)
+(hde: set.eq_on f g (set.interval a b)):
+set.eq_on (deriv f) (deriv g) (set.Ioo a b):=
+begin
+  rw set.eq_on,
+  intros x hx,
+  apply filter.eventually_eq.deriv_eq,
+  unfold filter.eventually_eq,
+  apply iff.elim_right eventually_nhds_eq_iff,
+  existsi (set.Ioo a b),
+  apply and.intro,
+  have inc:set.Ioo a b ⊆ set.interval a b:= 
+    by {rw set.interval, rw min_eq_left hab,
+        rw max_eq_right hab, exact set.Ioo_subset_Icc_self,},
+  exact set.eq_on.mono inc hde,
+  split,
+  exact is_open_Ioo,
+  exact hx,
+end
+
+lemma deriv_L1_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+set.eq_on (deriv (λ t:ℝ, L1 (2*t))) 
+(deriv (path_concatenation hw)) (set.Ioo (0:ℝ) 2⁻¹):=
+begin
+  apply deriv_eq_on,
+  simp,
+  exact path_concatenation_left' hw,
+end
+
+lemma deriv_L2_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+set.eq_on (deriv (λ t:ℝ, L2 (-1+2*t))) 
+(deriv (path_concatenation hw)) (set.Ioo 2⁻¹ (1:ℝ)):=
+begin
+  apply deriv_eq_on,
+  simp,
+  exact path_concatenation_right' hw,
+end
+
+lemma interval_integrable_iff_integrable_Ioo_volume
+(f : ℝ → E) {a b : ℝ} (hab : a ≤ b):
+  interval_integrable f measure_theory.measure_space.volume a b ↔ 
+  measure_theory.integrable_on f (set.Ioo a b) measure_theory.measure_space.volume :=
+begin
+  apply interval_integrable_iff_integrable_Ioo_of_le hab,
+  exact _inst_2,
+  exact _inst_3,
+  exact real.has_no_atoms_volume,
+end
+
+lemma path_comp_affine_deriv_integrable(L:ℝ→ ℂ)
+{k:ℝ}(hk:k≠ 0)(b:ℝ)
+(hli:interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
+interval_integrable (deriv (λ t:ℝ, L (b+k*t)))
+  measure_theory.measure_space.volume (-b/k) ((1-b)/k) :=
+begin
+  have m:(λ t:ℝ, L (b+k*t))=L∘ (affine_function k b):=
+    by {ext1,rw affine_function,},
+  rw m,
+  rw deriv_of_path_affine_comp k b L,
+  apply interval_integrable.smul,
+  sorry,
+end
+
+lemma path_concatenation_deriv_integrable{L1:ℝ→ ℂ}{L2:ℝ → ℂ}
+(hw: L1 1=L2 0)
+(hl1i:interval_integrable (deriv L1) measure_theory.measure_space.volume 0 1)
+(hl2i:interval_integrable (deriv L2) measure_theory.measure_space.volume 0 1):
+interval_integrable (deriv (path_concatenation hw))
+measure_theory.measure_space.volume 0 1 :=
+begin
+  have ze_leq_one:(0:ℝ)≤ (1:ℝ):= by simp,
+  have two_ne_zero: (2:ℝ)≠ (0:ℝ):= by simp,
+  have hl1i':=path_comp_affine_deriv_integrable L1 two_ne_zero 0 hl1i,
+  have hl2i':=path_comp_affine_deriv_integrable L2 two_ne_zero (-1) hl2i,
+  simp at hl1i', simp at hl2i',
+  apply interval_integrable.trans,
+  {
+    rw interval_integrable_iff_integrable_Ioo_volume 
+      (deriv (path_concatenation hw)) zero_leq_frac_1_2,
+    apply measure_theory.integrable_on.congr_fun,
+    {
+      rw ← interval_integrable_iff_integrable_Ioo_volume _ zero_leq_frac_1_2,
+      exact hl1i',
+      exact normed_field.to_normed_space,
+      exact complete_of_proper,
+    },
+    {
+      exact deriv_L1_eq_on hw,
+    },
+    {
+      exact measurable_set_Ioo,
+    },
+  },
+  {
+    rw interval_integrable_iff_integrable_Ioo_volume 
+      (deriv (path_concatenation hw)) frac_1_2,
+    apply measure_theory.integrable_on.congr_fun,
+    {
+      rw ← interval_integrable_iff_integrable_Ioo_volume _ frac_1_2,
+      exact hl2i',
+      exact normed_field.to_normed_space,
+      exact complete_of_proper,
+    },
+    {
+      exact deriv_L2_eq_on hw,
+    },
+    {
+      exact measurable_set_Ioo,
+    },
   },
 end
 

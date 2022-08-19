@@ -45,6 +45,15 @@ begin
   exact _inst_5,
 end
 
+lemma interval_integrable_iff_integrable_Ioo_of_le {μ:measure_theory.measure ℝ}
+{f : ℝ → E} {a b : ℝ} (hab : a ≤ b) [measure_theory.has_no_atoms μ] :
+  interval_integrable f μ a b ↔ measure_theory.integrable_on f (set.Ioo a b) μ :=
+begin
+  rw interval_integrable_iff_integrable_Icc_of_le hab,
+  exact integrable_on_Icc_iff_integrable_on_Ioo,
+  exact _inst_5,
+end
+
 lemma integral_congr' {μ:measure_theory.measure ℝ}{a b : ℝ}
 {f g : ℝ → E} (hab : a ≤ b) (h : set.eq_on f g (set.Ioc a b)) :
   ∫ x in a..b, f x ∂μ = ∫ x in a..b, g x ∂μ :=
