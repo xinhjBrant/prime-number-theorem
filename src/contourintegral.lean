@@ -14,7 +14,11 @@ noncomputable theory
 variables {E : Type} 
 [normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
-/-- Part O. Convert types -/
+/-! Part O. Convert types 
+
+- # Type Convertion
+-/
+
 @[simp] lemma smul_type_convert (a:ℝ)(b:E):
   (a:ℂ)• b = a • b :=
 begin
@@ -36,7 +40,10 @@ begin
   rw p2,
 end
 
-/-- Part O'. About 2⁻¹  -/
+/-! Part O'. About 2⁻¹  
+
+- # A Half
+-/
 
 @[simp] lemma zero_leq_frac_1_2: 0≤ (2⁻¹ : ℝ) := by simp
 
@@ -82,7 +89,10 @@ lemma frac_1_2_inclusion_right :
       intros a p q, split, 
       exact le_trans zero_leq_frac_1_2 p, exact q,}
 
-/-- Part O''. Aaffine function-/
+/-! Part O''. Aaffine function
+
+- # Affine Function
+-/
 
 /- The affine function is a ℝ → ℝ function with the form of t ↦ b + k * t for some k, b ∈ ℝ. -/
 def affine_function(k:ℝ)(b:ℝ):ℝ → ℝ := λ t:ℝ , b+k*t
@@ -220,7 +230,7 @@ begin
   exact p,
 end
 
-/-! Part I. Define paths and relevant basic operations 
+/-! Part I. Path: definition and basic properties
 
 - # Path
 A path is any function L defined as ℝ → ℂ
@@ -531,17 +541,20 @@ begin
   },
 end
 
-/-- Part II. Define contour integral -/
+/-! Part II. Integrability along a contour
 
-def contour_integral (f : ℂ → E) (L: ℝ → ℂ): E :=
-∫ (t: ℝ ) in 0..1, (deriv L t) • f(L t) 
+- # Contour Integrability
+-/
+
+def contour_integrable (f : ℂ → E) (L: ℝ → ℂ): Prop :=
+interval_integrable (λ (x : ℝ), deriv L x • f (L x)) 
+  measure_theory.measure_space.volume 0 1
 
 lemma contour_integrable_smul_continuous_on{f:ℂ → E}{L:ℝ → ℂ}
 (hf: continuous_on f (set.image L (set.interval 0 1)))
 (hl: continuous_on L (set.interval 0 1))
 (hli: interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
-interval_integrable (λ (x : ℝ), deriv L x • f (L x)) 
-  measure_theory.measure_space.volume 0 1 :=
+  contour_integrable f L :=
 begin
   apply interval_integrable.smul_continuous_on,
   {
@@ -568,9 +581,111 @@ begin
   },
 end
 
-/-- Part III. Integrals along path with operations -/
+lemma contour_integrable_zero (L:ℝ → ℂ):
+contour_integrable (λt:ℂ, (0:E)) L := 
+  by {unfold contour_integrable, simp, }
 
-@[simp] lemma integral_along_constant_path 
+lemma contour_integrable_neg {f:ℂ → E}{L:ℝ → ℂ}
+(h: contour_integrable f L):
+contour_integrable (-f) L :=
+  by {unfold contour_integrable at *, simp,
+  exact interval_integrable.neg h,}
+
+lemma contour_integrable_smul {f:ℂ → E}{L:ℝ → ℂ}
+(h: contour_integrable f L)(α:ℂ):
+contour_integrable (α • f) L :=
+begin
+  unfold contour_integrable at *, 
+  have mid:(λt:ℝ, deriv L t • (α • f) (L t))
+      =(λt:ℝ, α • deriv L t • f (L t)):=
+    by {ext1, simp, rw smul_comm,},
+  rw mid, 
+  exact interval_integrable.smul h _,
+end
+
+/-! Part III. Contour Integral: definition and basic properties 
+
+- # Contour Integral
+-/
+
+def contour_integral (f : ℂ → E) (L: ℝ → ℂ): E :=
+∫ (t: ℝ ) in 0..1, (deriv L t) • f(L t) 
+
+@[simp] lemma contour_integral_zero (L:ℝ → ℂ):
+contour_integral (λt:ℂ, (0:E)) L = 0 :=
+  by {unfold contour_integral, simp, }
+
+lemma contour_integral_neg (f:ℂ → E)(L:ℝ → ℂ):
+contour_integral (-f) L = - contour_integral f L :=
+  by {unfold contour_integral, simp,}
+
+lemma contour_integral_smul (f:ℂ → E)(L:ℝ → ℂ)(α:ℂ):
+contour_integral (α • f) L = α • contour_integral f L :=
+begin
+  unfold contour_integral,
+  have mid:(λt:ℝ, deriv L t • (α • f) (L t))
+      =(λt:ℝ, α • deriv L t • f (L t)):=
+    by {ext1, simp, rw smul_comm,},
+  rw mid,
+  rw smul_integral_convert,
+end
+
+lemma contour_integral_add{f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
+(hfL: contour_integrable f L)(hgL: contour_integrable g L):
+contour_integral (f + g) L = 
+contour_integral f L + contour_integral g L :=
+begin
+  unfold contour_integral, simp,
+  apply interval_integral.integral_add,
+  exact hfL, exact hgL,
+end
+
+lemma contour_integral_add' {f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
+(hf: continuous_on f (set.image L (set.interval 0 1)))
+(hg: continuous_on g (set.image L (set.interval 0 1)))
+(hl: continuous_on L (set.interval 0 1))
+(hli: interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
+contour_integral (f + g) L = 
+contour_integral f L + contour_integral g L :=
+begin
+  apply contour_integral_add,
+  exact contour_integrable_smul_continuous_on hf hl hli,
+  exact contour_integrable_smul_continuous_on hg hl hli,
+end 
+
+lemma contour_integral_sub{f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
+(hfL: contour_integrable f L)(hgL: contour_integrable g L):
+contour_integral (f - g) L = 
+contour_integral f L - contour_integral g L :=
+begin
+  unfold contour_integral, simp, 
+  have p:(λt:ℝ,deriv L t • (f (L t) - g (L t)))=
+  (λt:ℝ, deriv L t • f (L t) - deriv L t • g (L t)) :=
+    by {ext1, exact smul_sub _ (f(L x)) (g(L x)),},
+  rw p,
+  apply interval_integral.integral_sub,
+  exact hfL, exact hgL,
+end
+
+lemma contour_integral_sub' {f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
+(hf: continuous_on f (set.image L (set.interval 0 1)))
+(hg: continuous_on g (set.image L (set.interval 0 1)))
+(hl: continuous_on L (set.interval 0 1))
+(hli: interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
+contour_integral (f - g) L = 
+contour_integral f L - contour_integral g L :=
+begin
+  apply contour_integral_sub,
+  exact contour_integrable_smul_continuous_on hf hl hli,
+  exact contour_integrable_smul_continuous_on hg hl hli,
+end 
+
+/-! Part IV. Integral is an addictive function of the path
+
+- # Addictivity
+-/
+
+@[simp] lemma contour_integral_along_constant_path 
 (f : ℂ → E) (z:ℂ) :
 contour_integral f (constant_path z) = 0 :=
 begin
@@ -919,7 +1034,7 @@ begin
 end
 
 /- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
-theorem integral_along_inverse_path
+theorem contour_integral_along_inverse_path
 {f : ℂ → E} {L:ℝ → ℂ}(hf: continuous f) :
 contour_integral f (path_inverse L) = - contour_integral f L :=
 begin
@@ -1006,42 +1121,3 @@ begin
   rw relation_lr,
   simp,
 end
-
-/-- Part IV. Integrals of functions with basic operations -/
-@[simp] lemma integral_of_zero (L:ℝ → ℂ):
-contour_integral (λt:ℂ, (0:E)) L = 0 :=
-  by { rw contour_integral, simp, }
-
-lemma integral_negative (f:ℂ → E)(L:ℝ → ℂ):
-contour_integral (-f) L = - contour_integral f L :=
-  by {unfold contour_integral, simp,}
-
-lemma integral_smul (f:ℂ → E)(L:ℝ → ℂ)(α:ℂ):
-contour_integral (α • f) L = α • contour_integral f L :=
-begin
-  unfold contour_integral,
-  have mid:(λt:ℝ, deriv L t • (α • f) (L t))
-      =(λt:ℝ, α • deriv L t • f (L t)):=
-    by {ext1, simp, rw smul_comm,},
-  rw mid,
-  rw smul_integral_convert,
-end
-
-lemma integral_add {f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
-(hf: continuous_on f (set.image L (set.interval 0 1)))
-(hg: continuous_on g (set.image L (set.interval 0 1)))
-(hl: continuous_on L (set.interval 0 1))
-(hli: interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
-contour_integral (f + g) L = 
-contour_integral f L + contour_integral g L :=
-begin
-  unfold contour_integral,
-  simp,
-  apply interval_integral.integral_add,
-  {
-    exact contour_integrable_smul_continuous_on hf hl hli,
-  },
-  {  
-    exact contour_integrable_smul_continuous_on hg hl hli,
-  },
-end 
