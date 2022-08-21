@@ -800,6 +800,7 @@ begin
   exact real.has_no_atoms_volume,
 end
 
+/- The integral along the path L1∪L2 is equal to the sum of integrals along L1 and L2. -/
 theorem contour_integral_along_piecewise_path{f : ℂ → E}
 {L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0)
 (hi: contour_integrable f (path_concatenation hw)):
@@ -815,287 +816,22 @@ begin
   exact interval_integrable.mono_set hi frac_1_2_inclusion_right,
 end
 
-@[protected] lemma con_lemma : differentiable ℝ (λ (x : ℝ), -1 + 2 * x) :=
-begin
-  intro x,
-  simp,
-end
-
-/- The integral along the path L1∪L2 is equal to the sum of integrals along L1 and L2. -/
-theorem integral_along_piecewise_path{f : ℂ → E}
-{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0) (hf: continuous f)
-(hld1: differentiable ℝ L1)(hl1: continuous (deriv L1))
-(hld2: differentiable ℝ L2)(hl2: continuous (deriv L2)) :
+/- A useful version of the previous theorem -/
+theorem contour_integral_along_piecewise_path'{f : ℂ → E}
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0)
+(hf: continuous_on f (set.image (path_concatenation hw) (set.interval 0 1)))
+(hl1c: continuous_on L1 (set.interval 0 1))
+(hl2c: continuous_on L2 (set.interval 0 1))
+(hl1i: interval_integrable (deriv L1) measure_theory.measure_space.volume 0 1)
+(hl2i: interval_integrable (deriv L2) measure_theory.measure_space.volume 0 1):
 contour_integral f (path_concatenation hw) = 
 contour_integral f L1 + contour_integral f L2 :=
 begin
-  unfold contour_integral,
-
-  have l1_cont: continuous L1 := 
-    by exact differentiable.continuous hld1,
-  have l1_cont': continuous (λ (t : ℝ), L1 (2 * t)) := 
-    begin
-      apply continuous.comp l1_cont,
-      have diff : differentiable ℝ (λ (x : ℝ), 2 * x) := begin intro x, simp, end,
-      exact differentiable.continuous diff,
-    end,
-  have fl1_cont: continuous (f ∘ (λ (t : ℝ), L1 (2 * t))) := 
-    by exact continuous.comp hf l1_cont',
-  have l1d:(λ (t : ℝ), L1 (2 * t))=L1∘ (affine_function 2 0):=
-    by {ext1, rw affine_function, simp,},
-  let af2:=affine_function 2 0,
-  have af2_def:af2=affine_function 2 0:=rfl,
-  have af2_diff:∀x:ℝ, differentiable_at ℝ af2 x:=
-    by {rw af2_def, intro x, exact (affine_is_differentiable 2 0) x,},
-  have hh₂:∀ x:ℝ, differentiable_at ℝ L1 (af2 x):=
-    begin
-      intro x,
-      rw af2_def,
-      rw affine_function,
-      simp,
-      rw differentiable at hld1,
-      exact hld1 (2*x),
-    end, 
-  have deriv_L1d:  ∀ x:ℝ, (deriv (λ (t : ℝ), L1 (2 * t)) x)=
-  (deriv af2 x) • (deriv L1 (af2 x)) :=
-    begin
-      rw l1d,
-      intro x,
-      exact deriv.scomp x (hh₂ x) (af2_diff x),
-    end,
-  have deriv_L1d': (deriv (λ (t : ℝ), L1 (2 * t)))=
-  2 * ((deriv L1)∘ af2) :=
-    begin
-      ext1,
-      simp,
-      rw deriv_L1d x,
-      rw af2_def,
-      rw deriv_of_affine 2 0,
-      rw constant_real_function,
-      simp,
-    end,
-  let af2c:ℂ → ℂ :=λz,(2*z),
-  have af2c_def: (af2c= (( λ (z:ℂ), (2 * z)):ℂ → ℂ)):=by simp,
-  have af2c_cont: continuous af2c:=by {rw af2c_def,exact continuous_mul_left 2,},
-  have hl1'_pre: continuous ((deriv L1) ∘ af2):=
-    begin
-      rw af2_def,
-      exact continuous.comp hl1 (affine_is_continuous 2 0),
-    end,
-  have deriv_L1d'':(deriv (λ (t : ℝ), L1 (2 * t)))=
-  af2c ∘  ((deriv L1)∘ af2):= by {rw af2c_def,rw deriv_L1d', ring_nf,},
-  have hl1' : continuous (deriv (λ (t : ℝ), L1 (2 * t))) := 
-  begin
-    rw deriv_L1d'',
-    exact continuous.comp af2c_cont hl1'_pre,
-  end,
-  have first_cont: continuous 
-    ((λ (t : ℝ), deriv (λ (t : ℝ), L1 (2 * t)) t • f (L1 (2 * t))):ℝ → E ):= 
-    by exact continuous.smul hl1' fl1_cont,
-  have first_integrable_l : interval_integrable 
-    ((λ (t : ℝ), deriv (λ (t : ℝ), L1 (2 * t)) t • f (L1 (2 * t))) :ℝ → E ) 
-    measure_theory.measure_space.volume 0 2⁻¹:=
-    continuous.interval_integrable first_cont 0 2⁻¹,
-
-  have first_func : ∀ (t:ℝ), t ∈ (set.Ico (0:ℝ) 2⁻¹) → 
-  deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)) = deriv (path_concatenation hw) t • 
-    f (path_concatenation hw t) :=
-  begin
-    intro t,
-    intro in_condition,
-    simp at in_condition,
-    repeat {rw path_concatenation_left hw in_condition.2,},
-    have h1 : deriv (path_concatenation hw) t = deriv (λ (t : ℝ), L1 (2 * t)) t := 
-      begin 
-        apply filter.eventually_eq.deriv_eq,
-        unfold filter.eventually_eq,
-        apply iff.elim_right eventually_nhds_eq_iff,
-        existsi {x : ℝ | x < 2⁻¹},
-        apply and.intro,
-        {
-          intros x hx,
-          simp at hx,
-          have h0 : x ≤ 2⁻¹ :=  has_lt.lt.le hx,
-          exact path_concatenation_left hw h0,
-        },
-        {
-          apply and.intro,
-          {
-            exact is_open_Iio,
-          },
-          {
-            simp,
-            exact in_condition.right,
-          }
-        }
-      end,
-    rw h1,
-    have ht := has_lt.lt.le in_condition.right,
-    rw path_concatenation_left hw ht,
-  end,
-
-  have first_func' : set.eq_on ((λ x :ℝ, deriv (λ(t:ℝ),L1 (2*t)) x • f (L1 (2 * x))):ℝ→ E)
-  ((λ x :ℝ, deriv (path_concatenation hw) x • f (path_concatenation hw x)):ℝ → E) 
-  (set.Ico (0:ℝ) (2⁻¹:ℝ)):=
-    by {rw set.eq_on, exact first_func,},
-
-  have l2d:(λ (t : ℝ), L2 (-1 + 2 * t))=L2∘ (affine_function 2 (-1)):=
-    by {ext1, rw affine_function,},
-  let af21:=affine_function 2 (-1),
-  have af21_def:af21=affine_function 2 (-1):=rfl,
-  have af21_diff:∀x:ℝ, differentiable_at ℝ af21 x:=
-    by {rw af21_def, intro x, exact (affine_is_differentiable 2 (-1)) x,},
-  have hh₃:∀ x:ℝ, differentiable_at ℝ L2 (af21 x):=
-    begin
-      intro x,
-      rw af21_def,
-      rw affine_function,
-      simp,
-      rw differentiable at hld2,
-      exact hld2 (-1+2*x),
-    end, 
-  have deriv_L2d:  ∀ x:ℝ, (deriv (λ (t : ℝ), L2 (-1 + 2 * t)) x)=
-  (deriv af21 x) • (deriv L2 (af21 x)) :=
-    begin
-      rw l2d,
-      intro x,
-      exact deriv.scomp x (hh₃ x) (af21_diff x),
-    end,
-  have deriv_L2d': (deriv (λ (t : ℝ), L2 (-1 + 2 * t)))=
-  2 * ((deriv L2)∘ af21) :=
-    begin
-      ext1,
-      simp,
-      rw deriv_L2d x,
-      rw af21_def,
-      rw deriv_of_affine 2 (-1),
-      rw constant_real_function,
-      simp,
-    end,
-  have hl2'_pre: continuous ((deriv L2) ∘ af21):=
-    begin
-      rw af21_def,
-      exact continuous.comp hl2 (affine_is_continuous 2 (-1)),
-    end,
-  have deriv_L2d'':(deriv (λ (t : ℝ), L2 (-1 + 2 * t)))=
-  af2c ∘  ((deriv L2)∘ af21):= by {rw af2c_def,rw deriv_L2d', ring_nf,},
-  have hl2' : continuous (deriv (λ (t : ℝ), L2 (-1 + 2 * t))) := 
-    begin
-    rw deriv_L2d'',
-    exact continuous.comp af2c_cont hl2'_pre,
-    end,
-
-  have second_func:∀ (t:ℝ), t∈ (set.Ioc (2⁻¹:ℝ) (1:ℝ))→ 
-  deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) = deriv (path_concatenation hw) t • f (path_concatenation hw t) :=
-  begin
-    intro t,
-    intro in_condition,
-    simp at in_condition,
-    repeat {rw path_concatenation_left hw in_condition.2,},
-    have h1 : deriv (path_concatenation hw) t = deriv (λ (t : ℝ), L2 (-1 + 2 * t)) t := 
-      begin 
-        apply filter.eventually_eq.deriv_eq,
-        unfold filter.eventually_eq,
-        apply iff.elim_right eventually_nhds_eq_iff,
-        existsi {x : ℝ | x > 2⁻¹},
-        apply and.intro,
-        {
-          intros x hx,
-          simp at hx,
-          have h0 : x ≥ 2⁻¹ :=  has_lt.lt.le hx,
-          exact path_concatenation_right hw h0,
-        },
-        {
-          apply and.intro,
-          {
-            exact is_open_Ioi,
-          },
-          {
-            simp,
-            exact in_condition.left,
-          }
-        }
-      end,
-    rw h1,
-    have ht := has_lt.lt.le in_condition.left,
-    rw path_concatenation_right hw ht,
-  end,
-
-  have second_func':set.eq_on ((λ t:ℝ,deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) ):ℝ → E) ((λt:ℝ, deriv (path_concatenation hw) t • f (path_concatenation hw t)):ℝ→ E) 
-  (set.Ioc (2⁻¹:ℝ) (1:ℝ)):=
-    by {rw set.eq_on,exact second_func,},
-  
-  have h_ : (0:ℝ) ≤ (2⁻¹:ℝ) := by simp,
-
-  --have first_integrable : integrable ((λ(t:ℝ), (deriv L1 t)• f(L1(t))):ℝ → E ) (μ.restrict set.Ioc 0 (1 / 2))
-
-  have lhs: 
-    (∫ (t : ℝ) in 0..2⁻¹, deriv (path_concatenation hw) t • f (path_concatenation hw t) ) 
-    +
-    (∫ (t : ℝ) in 2⁻¹..1, deriv (path_concatenation hw) t • f (path_concatenation hw t) ) 
-    =
-    ∫ (t : ℝ) in 0..1, deriv (path_concatenation hw) t • f (path_concatenation hw t) 
-    :=
-  begin
-    apply interval_integral.integral_add_adjacent_intervals,
-    {
-      apply iff.elim_right (interval_integrable_iff_integrable_Ico_of_le h_),
-      have h : measure_theory.integrable_on (λ (t : ℝ), deriv (λ (t : ℝ), L1 (2 * t)) t • f (L1 (2*t))) (set.Ico 0 2⁻¹) measure_theory.measure_space.volume := iff.elim_left (interval_integrable_iff_integrable_Ico_of_le h_) first_integrable_l,
-      apply measure_theory.integrable_on.congr_fun h first_func' _,
-      simp,
-      exact _inst_2,
-      exact _inst_3,
-      exact real.has_no_atoms_volume,
-    },
-    {
-      apply iff.elim_right (interval_integrable_iff_integrable_Ioc_of_le frac_1_2),
-      have h : measure_theory.integrable_on (λ (t : ℝ), deriv (λ (t : ℝ), L2 (-1+2*t)) t • f (L2 (-1+2*t))) (set.Ioc 2⁻¹ 1) measure_theory.measure_space.volume := 
-      begin
-        apply iff.elim_left (interval_integrable_iff_integrable_Ioc_of_le frac_1_2),
-        apply continuous.interval_integrable,
-        apply continuous.smul,
-        {
-          apply continuous.comp,
-          {
-            exact hl2',
-          },
-          {
-            have diff : differentiable ℝ (λ (x : ℝ), x) := begin intro x, simp, end,
-            exact differentiable.continuous diff,
-          }
-        },
-        {
-          apply continuous.comp hf,
-          {
-            have l2_cont: continuous L2 := by exact differentiable.continuous hld2,
-            apply continuous.comp l2_cont,
-            have diff : differentiable ℝ (λ (x : ℝ), -1 + 2 * x) :=
-            begin intro x, simp, end,
-            exact differentiable.continuous diff,
-          }
-        }      
-      end,
-      apply measure_theory.integrable_on.congr_fun h second_func' _,
-      exact measurable_set_Ioc,
-    }
-  end,
-
-  rw ←lhs,
-  have integral_of_first_func: ∫ (t : ℝ) in 0..2⁻¹, 
-  deriv (path_concatenation hw) t • 
-  f (path_concatenation hw t) = ∫ (t : ℝ) in 0..2⁻¹, 
-  deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)):=
-    by {rw integral_congr'' h_ first_func',exact real.pi,exact real.pi,},
-
-  have integral_of_second_func: ∫ (t : ℝ) in 2⁻¹..1, 
-  deriv (path_concatenation hw) t • 
-  f (path_concatenation hw t) = ∫ (t : ℝ) in 2⁻¹..1, 
-  deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)):=
-    by rw integral_congr' frac_1_2 second_func',
-  rw integral_of_first_func,
-  rw integral_of_second_func,
-  rw ← first_term_of_sum f L1,
-  rw ← second_term_of_sum f L2,
+  apply contour_integral_along_piecewise_path hw,
+  apply contour_integrable_smul_continuous_on,
+  exact hf,
+  exact path_concatenation_continuous_on hw hl1c hl2c,
+  exact path_concatenation_deriv_integrable hw hl1i hl2i,
 end
 
 /- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
