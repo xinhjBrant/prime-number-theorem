@@ -107,6 +107,29 @@ begin
   exact h2,
 end
 
+lemma volume_add_right (a : ℝ) :
+  measure_theory.measure.map ((+) a) measure_theory.measure_space.volume = 
+  measure_theory.measure_space.volume :=
+begin
+  have t:=real.is_add_left_invariant_real_volume.map_add_left_eq_self,
+  exact t a,
+end
+
+lemma integrable_comp_add_left {f:ℝ → E}{a b:ℝ}
+(hf : interval_integrable f measure_theory.measure_space.volume a b) 
+(h : ℝ) :
+  interval_integrable (λ x, f (h+x)) measure_theory.measure_space.volume (a-h) (b-h) :=
+begin
+  rw interval_integrable_iff' at hf ⊢,
+  have A : measurable_embedding (λ x, (-h)+x) :=
+    measurable_embedding_add_left (-h),
+  rw [←volume_add_right (-h), measure_theory.integrable_on, 
+      ←measure_theory.integrable_on, measurable_embedding.integrable_on_map_iff A],
+  convert hf using 1,
+  { ext, simp, },
+  { simp,},
+end
+
 /- The following codes are from Oliver Nash and Bhavik Mehta. 
 See Zulip discussion https://leanprover.zulipchat.com/#narrow/stream/217875-Is-there-code-for-X.3F/topic/ae.20measurable.20condition 
 -/

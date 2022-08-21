@@ -468,7 +468,18 @@ begin
   rw m,
   rw deriv_of_path_affine_comp k b L,
   apply interval_integrable.smul,
-  sorry,
+  let f:=λ(t:ℝ), deriv L (b+t),
+  let g:=λ(t:ℝ), deriv L t,
+  have rf: (deriv L ∘ affine_function k b) = (λ(t:ℝ), f(k*t)):=
+    by {ext1, rw affine_function, },
+  have rg: f = (λ(t:ℝ), g(b+t)) := 
+    by {ext1, simp,},
+  rw rf,
+  apply interval_integrable.comp_mul_left,
+  rw rg,
+  have minusb: -b=0-b:= by ring_nf, rw minusb,
+  apply integrable_comp_add_left,
+  exact hli,
 end
 
 lemma path_concatenation_deriv_integrable{L1:ℝ→ ℂ}{L2:ℝ → ℂ}
@@ -524,6 +535,38 @@ end
 
 def contour_integral (f : ℂ → E) (L: ℝ → ℂ): E :=
 ∫ (t: ℝ ) in 0..1, (deriv L t) • f(L t) 
+
+lemma contour_integrable_smul_continuous_on{f:ℂ → E}{L:ℝ → ℂ}
+(hf: continuous_on f (set.image L (set.interval 0 1)))
+(hl: continuous_on L (set.interval 0 1))
+(hli: interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
+interval_integrable (λ (x : ℝ), deriv L x • f (L x)) 
+  measure_theory.measure_space.volume 0 1 :=
+begin
+  apply interval_integrable.smul_continuous_on,
+  {
+    exact hli,
+  },
+  {
+    simp at *,
+    apply continuous_on.comp,
+    {
+      exact hf,
+    },
+    {
+      exact hl,
+    },
+    {
+      simp,
+      rw set.maps_to,
+      intros x x_in,
+      simp,
+      use x, split,
+      simp at x_in, exact x_in,
+      exact rfl,
+    },
+  },
+end
 
 /-- Part III. Integrals along path with operations -/
 
@@ -599,7 +642,7 @@ begin
 end
 
 /- The integral along the path L1∪L2 is equal to the sum of integrals along L1 and L2. -/
-lemma integral_along_piecewise_path{f : ℂ → E}
+theorem integral_along_piecewise_path{f : ℂ → E}
 {L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0) (hf: continuous f)
 (hld1: differentiable ℝ L1)(hl1: continuous (deriv L1))
 (hld2: differentiable ℝ L2)(hl2: continuous (deriv L2)) :
@@ -876,7 +919,7 @@ begin
 end
 
 /- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
-lemma integral_along_inverse_path
+theorem integral_along_inverse_path
 {f : ℂ → E} {L:ℝ → ℂ}(hf: continuous f) :
 contour_integral f (path_inverse L) = - contour_integral f L :=
 begin
@@ -983,3 +1026,22 @@ begin
   rw mid,
   rw smul_integral_convert,
 end
+
+lemma integral_add {f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
+(hf: continuous_on f (set.image L (set.interval 0 1)))
+(hg: continuous_on g (set.image L (set.interval 0 1)))
+(hl: continuous_on L (set.interval 0 1))
+(hli: interval_integrable (deriv L) measure_theory.measure_space.volume 0 1):
+contour_integral (f + g) L = 
+contour_integral f L + contour_integral g L :=
+begin
+  unfold contour_integral,
+  simp,
+  apply interval_integral.integral_add,
+  {
+    exact contour_integrable_smul_continuous_on hf hl hli,
+  },
+  {  
+    exact contour_integrable_smul_continuous_on hg hl hli,
+  },
+end 
