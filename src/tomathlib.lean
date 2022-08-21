@@ -54,6 +54,18 @@ begin
   exact _inst_5,
 end
 
+lemma integral_congr'''{μ:measure_theory.measure ℝ}{a b : ℝ}
+{f g : ℝ → E} (hab : a ≤ b) (h : set.eq_on f g (set.Ioo a b))
+[measure_theory.has_no_atoms μ] :
+  ∫ x in a..b, f x ∂μ = ∫ x in a..b, g x ∂μ :=
+begin
+  repeat {rw interval_integral.integral_of_le hab,},
+  repeat {rw measure_theory.set_integral_congr_set_ae
+    measure_theory.Ioo_ae_eq_Ioc.symm,},
+  exact measure_theory.set_integral_congr measurable_set_Ioo h,
+  exact _inst_5, exact _inst_5,
+end
+
 lemma integral_congr' {μ:measure_theory.measure ℝ}{a b : ℝ}
 {f g : ℝ → E} (hab : a ≤ b) (h : set.eq_on f g (set.Ioc a b)) :
   ∫ x in a..b, f x ∂μ = ∫ x in a..b, g x ∂μ :=

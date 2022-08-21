@@ -77,7 +77,7 @@ end
 @[simp] lemma Icchalfone: set.interval (2⁻¹:ℝ) 1 = set.Icc (2⁻¹:ℝ) 1 :=
   by {rw set.interval, rw frac_1_2', rw frac_1_2'',}
 
-lemma frac_1_2_inclustion_left : 
+lemma frac_1_2_inclusion_left : 
   (set.interval 0 (2⁻¹:ℝ))⊆ (set.interval 0 (1:ℝ)) :=
   by {simp, repeat {rw set.Icc,},simp,
       intros x p q, split, exact p,
@@ -438,7 +438,7 @@ begin
   exact hx,
 end
 
-lemma deriv_L1_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+@[protected] lemma deriv_L1_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
 set.eq_on (deriv (λ t:ℝ, L1 (2*t))) 
 (deriv (path_concatenation hw)) (set.Ioo (0:ℝ) 2⁻¹):=
 begin
@@ -447,7 +447,7 @@ begin
   exact path_concatenation_left' hw,
 end
 
-lemma deriv_L2_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+@[protected] lemma deriv_L2_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
 set.eq_on (deriv (λ t:ℝ, L2 (-1+2*t))) 
 (deriv (path_concatenation hw)) (set.Ioo 2⁻¹ (1:ℝ)):=
 begin
@@ -700,7 +700,7 @@ begin
   simp,
 end
 
-lemma genearl_term_of_sum' (f : ℂ → E)(L:ℝ → ℂ)
+@[protected] lemma genearl_term_of_sum' (f : ℂ → E)(L:ℝ → ℂ)
 (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ):
 ∫ (t : ℝ) in b+k*lep..b+k*rep, deriv L t • f (L t) 
 = ∫ (t : ℝ) in lep..rep, 
@@ -713,7 +713,7 @@ begin
   simp [smul_assoc_convert],
 end
 
-lemma genearl_term_of_sum (f : ℂ → E)(L:ℝ → ℂ)
+@[protected] lemma genearl_term_of_sum (f : ℂ → E)(L:ℝ → ℂ)
 (k:ℝ)(b:ℝ)(lep:ℝ)(rep:ℝ):
 ∫ (t : ℝ) in b+k*lep..b+k*rep, deriv L t • f (L t) 
 = ∫ (t : ℝ) in lep..rep, 
@@ -726,7 +726,7 @@ begin
   exact genearl_term_of_sum' _ _ _ _ _ _,
 end
 
-lemma first_term_of_sum(f : ℂ → E)(L1:ℝ → ℂ): 
+@[protected] lemma first_term_of_sum(f : ℂ → E)(L1:ℝ → ℂ): 
 ∫ (t : ℝ) in 0..1, deriv L1 t • f (L1 t) 
 = ∫ (t : ℝ) in 0..2⁻¹, 
 deriv (λ(t:ℝ),L1 (2*t)) t • f (L1 (2*t)) :=
@@ -739,7 +739,7 @@ begin
   simp,
 end
 
-lemma second_term_of_sum(f : ℂ → E)(L2:ℝ → ℂ): 
+@[protected] lemma second_term_of_sum(f : ℂ → E)(L2:ℝ → ℂ): 
 ∫ (t : ℝ) in 0..1, deriv L2 t • f (L2 t) 
 = ∫ (t : ℝ) in 2⁻¹..1, 
 deriv (λ(t:ℝ),L2 (-1+2*t)) t • f (L2 (-1+2*t)) :=
@@ -750,7 +750,72 @@ begin
   rw q,
 end
 
-lemma con_lemma : differentiable ℝ (λ (x : ℝ), -1 + 2 * x) :=
+@[protected] lemma first_func_in_term(f : ℂ → E)
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0):
+set.eq_on (λ t:ℝ, deriv (λ(x:ℝ),L1 (2*x)) t • f (L1 (2*t))) 
+(λ t:ℝ, deriv (path_concatenation hw) t • f (path_concatenation hw t)) 
+(set.Ioo (0:ℝ) 2⁻¹) :=
+begin
+  rw set.eq_on,
+  intros x x_in,
+  rw deriv_L1_eq_on hw x_in,
+  have ip: (set.Ioo (0:ℝ) 2⁻¹)⊆ (set.interval (0:ℝ) 2⁻¹) := 
+    by {simp,exact set.Ioo_subset_Icc_self},
+  have x_in':x∈ (set.interval (0:ℝ) 2⁻¹) := ip x_in,
+  have t:=path_concatenation_left' hw x_in', simp at t, rw t,
+end
+
+@[protected] lemma second_func_in_term(f : ℂ → E)
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0):
+set.eq_on (λt:ℝ,deriv (λ(x:ℝ),L2 (-1+2*x)) t • f (L2 (-1+2*t)))
+(λ t:ℝ, deriv (path_concatenation hw) t • f (path_concatenation hw t)) 
+(set.Ioo (2⁻¹:ℝ) 1) :=
+begin
+  rw set.eq_on,
+  intros x x_in,
+  rw deriv_L2_eq_on hw x_in,
+  have ip: (set.Ioo (2⁻¹:ℝ) 1)⊆ (set.interval (2⁻¹:ℝ) 1) := 
+    by {simp,exact set.Ioo_subset_Icc_self},
+  have x_in':x∈ (set.interval (2⁻¹:ℝ) 1) := ip x_in,
+  have t:=path_concatenation_right' hw x_in', simp at t, rw t,
+end
+
+@[protected] lemma contour_integral_first_piece (f : ℂ → E)
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0):
+contour_integral f L1 = 
+(∫ (t : ℝ) in 0..2⁻¹, deriv (path_concatenation hw) t • f (path_concatenation hw t) ) :=
+begin
+  unfold contour_integral, rw first_term_of_sum,
+  rw integral_congr''' zero_leq_frac_1_2 (first_func_in_term f hw),
+  exact real.has_no_atoms_volume,
+end
+
+@[protected] lemma contour_integral_second_piece (f : ℂ → E)
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0):
+contour_integral f L2 = 
+(∫ (t : ℝ) in 2⁻¹..1, deriv (path_concatenation hw) t • f (path_concatenation hw t) ) :=
+begin
+  unfold contour_integral, rw second_term_of_sum,
+  rw integral_congr''' frac_1_2 (second_func_in_term f hw),
+  exact real.has_no_atoms_volume,
+end
+
+theorem contour_integral_along_piecewise_path{f : ℂ → E}
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0)
+(hi: contour_integrable f (path_concatenation hw)):
+contour_integral f (path_concatenation hw) = 
+contour_integral f L1 + contour_integral f L2 :=
+begin
+  unfold contour_integrable at hi,
+  rw [contour_integral_first_piece f hw, 
+      contour_integral_second_piece f hw,
+      contour_integral], symmetry,
+  apply interval_integral.integral_add_adjacent_intervals,
+  exact interval_integrable.mono_set hi frac_1_2_inclusion_left,
+  exact interval_integrable.mono_set hi frac_1_2_inclusion_right,
+end
+
+@[protected] lemma con_lemma : differentiable ℝ (λ (x : ℝ), -1 + 2 * x) :=
 begin
   intro x,
   simp,
