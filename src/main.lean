@@ -13,7 +13,19 @@ open asymptotics filter real nat.arithmetic_function
 
 local notation `π` := nat.prime_counting
 
-lemma pi_def (x : ℝ) : (π ⌊x⌋₊ : ℝ) = ∑ n in (finset.range (⌊x⌋₊ + 1)).filter nat.prime, 1:= sorry
+lemma pi_def (x : ℝ) : (π ⌊x⌋₊ : ℝ) = ∑ n in (finset.range (⌊x⌋₊ + 1)).filter nat.prime, 1:= 
+begin
+  have h₁: prime_summatory (λ _, (1 : ℝ)) 1 x = ∑ n in (finset.range (⌊x⌋₊ + 1)).filter nat.prime, 1:=
+    begin 
+    rw prime_summatory, 
+    rw finset.range_eq_Ico,
+    rw nat.Ico_succ_right,
+    congr' 1,
+    simp [finset.ext_iff, nat.one_le_iff_ne_zero, nat.prime.ne_zero] {contextual := tt},
+    end,
+  rw prime_counting_eq_prime_summatory',
+  exact h₁,
+end
 
 def at_top_within (s : set ℝ) : filter ℝ := at_top ⊓ 𝓟 s
 
