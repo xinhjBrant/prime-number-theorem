@@ -80,6 +80,60 @@ begin
   ... < 1 : one_half_lt_one,
 end
 
+lemma theta_lower_bound_2 (ε x : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2)(hx : 1 < x) : (1 - ε) * ((π ⌊x⌋₊ : ℝ) - (π ⌊x ^ (1 - ε)⌋₊ : ℝ)) * log x ≤ ϑ x := 
+begin
+  unfold chebyshev_first,
+  repeat {rw pi_def},
+  rw [mul_comm], 
+  rw ←mul_assoc,
+  rw ←le_div_iff',
+  have h₁: 0 < log x * (1 - ε):=
+        begin
+        have h₁₁: 0 < log x:= log_pos hx,
+        have h₁₂: 0 < (1 - ε):= begin 
+        simp,
+        calc
+        ε ≤ 1 / 2 : hε.2
+        ... < 1 : one_half_lt_one,
+        end,
+        exact mul_pos h₁₁ h₁₂,
+        end,
+  have h2 : (((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) - 
+  (∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), real.log n)) / (log x * (1 - ε))) ≤ 
+  ((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) / (log x * (1 - ε))) := 
+  begin
+    rw div_le_div_right,
+    apply sub_le_self _,
+    {
+      have h : (0 : ℝ) = ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), 0 := by simp,
+      rw h,
+      apply finset.sum_le_sum,
+      intros x hx,
+      exact log_nat_nonneg x,
+    },
+    exact has_add.to_covariant_class_left ℝ,
+    exact has_add.to_covariant_class_right ℝ,
+    exact h₁,
+  end,
+  have h3 : ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), (1 : ℝ)
+  - ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), (1 : ℝ) ≤ 
+  (((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) - 
+  (∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), real.log n)) / (log x * (1 - ε))) :=
+    begin
+      rw sub_div,
+      rw finset.sum_div,
+      repeat{sorry}
+    end,
+  exact le_trans h3 h2,
+  have h4 : 0 < log x := log_pos hx,
+  apply (zero_lt_mul_left h4).mpr,
+  rw lt_sub,
+  simp,
+  calc
+  ε ≤ 1 / 2 : hε.2
+  ... < 1 : one_half_lt_one,
+end
+
 lemma theta_upper_bound (x : ℝ)(hx : 1 < x) : ϑ x ≤ (π ⌊x⌋₊ : ℝ) * log x := 
 begin
   unfold chebyshev_first,
