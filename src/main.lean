@@ -82,6 +82,14 @@ end
 
 lemma theta_lower_bound_2 (ε x : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2)(hx : 1 < x) : (1 - ε) * ((π ⌊x⌋₊ : ℝ) - (π ⌊x ^ (1 - ε)⌋₊ : ℝ)) * log x ≤ ϑ x := 
 begin
+    have x0: 0 < x:=
+    begin
+    have h := zero_lt_one,
+    exact lt_trans h hx,
+    -- calc
+    -- x > 1 : hx
+    -- ... > 0 : zero_lt_one
+    end,
   unfold chebyshev_first,
   repeat {rw pi_def},
   rw [mul_comm], 
