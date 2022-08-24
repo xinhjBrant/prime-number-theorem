@@ -82,31 +82,44 @@ end
 
 lemma theta_lower_bound_2 (ε x : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2)(hx : 1 < x) : (1 - ε) * ((π ⌊x⌋₊ : ℝ) - (π ⌊x ^ (1 - ε)⌋₊ : ℝ)) * log x ≤ ϑ x := 
 begin
-    have x0: 0 < x:=
-    begin
-    have h := zero_lt_one,
-    exact lt_trans h hx,
-    -- calc
-    -- x > 1 : hx
-    -- ... > 0 : zero_lt_one
-    end,
   unfold chebyshev_first,
   repeat {rw pi_def},
   rw [mul_comm], 
   rw ←mul_assoc,
   rw ←le_div_iff',
-  have h₁: 0 < log x * (1 - ε):=
-        begin
-        have h₁₁: 0 < log x:= log_pos hx,
-        have h₁₂: 0 < (1 - ε):= begin 
-        simp,
-        calc
+  have x_0 : 0 < x := 
+    begin
+      calc
+      x > 1 : hx
+      ... > 0 : zero_lt_one
+    end,
+  have h1ε: 0 < (1 - ε):= 
+    begin 
+      simp,
+      calc
         ε ≤ 1 / 2 : hε.2
         ... < 1 : one_half_lt_one,
-        end,
-        exact mul_pos h₁₁ h₁₂,
-        end,
-  have h2 : (((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) - 
+    end,
+  have ε_0 : 0 < x ^ (1 - ε) := 
+    begin
+      exact rpow_pos_of_pos x_0 (1 - ε),
+    end,
+  have log_rpow: log (x ^ (1 - ε)) = log x * (1 - ε):=
+    begin
+      rw real.log_rpow x_0 (1 - ε),
+      rw mul_comm,
+    end,
+  have h₁: 0 < log x * (1 - ε):=
+    begin
+    have h₁₁: 0 < log x:= log_pos hx,
+    exact mul_pos h₁₁ h1ε,
+    end,
+  have hlog : 0 < log (x ^ (1 - ε)) :=
+    begin
+      rw log_rpow,
+      exact h₁,
+    end,
+  have h₂ : (((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) - 
   (∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), real.log n)) / (log x * (1 - ε))) ≤ 
   ((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) / (log x * (1 - ε))) := 
   begin
@@ -123,23 +136,67 @@ begin
     exact has_add.to_covariant_class_right ℝ,
     exact h₁,
   end,
-  have h3 : ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), (1 : ℝ)
-  - ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), (1 : ℝ) ≤ 
-  (((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) - 
-  (∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), real.log n)) / (log x * (1 - ε))) :=
+  have h₃ : ∑ (n : ℕ) in finset.filter nat.prime ((finset.Ioc (⌊x ^ (1 - ε)⌋₊) (⌊x⌋₊))), (1 : ℝ) ≤ 
+  ((∑ (n : ℕ) in finset.filter nat.prime (finset.Ioc (⌊x ^ (1 - ε)⌋₊) (⌊x⌋₊)), real.log n) / (log x * (1 - ε))) :=
     begin
-      rw sub_div,
+      rw ←log_rpow,
       rw finset.sum_div,
-      repeat{sorry}
+      apply finset.sum_le_sum,
+      intros i hi,
+      rw one_le_div,
+      have h₃₁₀: i ∈ finset.Ioc (⌊x ^ (1 - ε)⌋₊) (⌊x⌋₊) := sorry,
+      have h₃₁₁ : x ^ (1 - ε) ≤ i := 
+        begin
+          rw ←nat.Icc_succ_left at h₃₁₀,
+          rw nat.succ_eq_add_one at h₃₁₀,
+          rw ←nat.floor_add_one at h₃₁₀,
+          rw finset.mem_Icc at h₃₁₀,
+          have floor_bound : ⌊x ^ (1 - ε) + 1⌋₊ ≤ i := and.elim_left h₃₁₀,
+          have floor_le : x ^ (1 - ε) ≤ ⌊x ^ (1 - ε) + 1⌋₊ := 
+            begin
+              have add_sub : x ^ (1 - ε) = (x ^ (1 - ε) + 1) - 1, {simp},
+              have floor_lt : x ^ (1 - ε) < ⌊x ^ (1 - ε) + 1⌋₊ := 
+                begin
+                  conv
+                  begin
+                    to_lhs,
+                    rw add_sub,
+                  end,
+                  exact nat.sub_one_lt_floor (x ^ (1 - ε) + 1),
+                end,
+              exact le_of_lt floor_lt,
+            end,
+          have coe_le_coe_floor : ⌊x ^ (1 - ε) + 1⌋₊ ≤ i → (⌊x ^ (1 - ε) + 1⌋₊ : ℝ) ≤ (i : ℝ) := 
+            begin
+              simp,
+            end,
+          have coe_floor_bound : (⌊x ^ (1 - ε) + 1⌋₊ : ℝ) ≤ (i : ℝ) := 
+            begin
+              apply coe_le_coe_floor,
+              exact floor_bound,
+            end,
+          exact le_trans floor_le coe_floor_bound,
+          have hand : (0 < x ^ (1 - ε)) ∨ (0 = x ^ (1 - ε)) := or.intro_left (0 = x ^ (1 - ε)) ε_0,
+          exact le_of_lt_or_eq hand,
+        end,
+      have h₃₁₂: log (x ^ (1 - ε)) ≤ real.log ↑i :=
+        begin
+          rw real.log_le_log,
+          exact h₃₁₁,
+          exact ε_0,
+          exact lt_of_lt_of_le ε_0 h₃₁₁,
+        end,
+      exact h₃₁₂,
+      exact hlog,
     end,
-  exact le_trans h3 h2,
-  have h4 : 0 < log x := log_pos hx,
-  apply (zero_lt_mul_left h4).mpr,
+  exact le_trans h₃ h₂,
+  have h₄ : 0 < log x := log_pos hx,
+  apply (zero_lt_mul_left h₄).mpr,
   rw lt_sub,
   simp,
   calc
-  ε ≤ 1 / 2 : hε.2
-  ... < 1 : one_half_lt_one,
+    ε ≤ 1 / 2 : hε.2
+    ... < 1 : one_half_lt_one,
 end
 
 lemma theta_upper_bound (x : ℝ)(hx : 1 < x) : ϑ x ≤ (π ⌊x⌋₊ : ℝ) * log x := 
