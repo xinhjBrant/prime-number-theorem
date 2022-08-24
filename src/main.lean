@@ -144,7 +144,10 @@ begin
       apply finset.sum_le_sum,
       intros i hi,
       rw one_le_div,
-      have h₃₁₀: i ∈ finset.Ioc (⌊x ^ (1 - ε)⌋₊) (⌊x⌋₊) := sorry,
+      have h₃₁₀: i ∈ finset.Ioc (⌊x ^ (1 - ε)⌋₊) (⌊x⌋₊) := 
+        begin 
+          apply finset.mem_of_mem_filter i hi,
+        end,
       have h₃₁₁ : x ^ (1 - ε) ≤ i := 
         begin
           rw ←nat.Icc_succ_left at h₃₁₀,
