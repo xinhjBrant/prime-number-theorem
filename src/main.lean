@@ -100,6 +100,11 @@ begin
         ε ≤ 1 / 2 : hε.2
         ... < 1 : one_half_lt_one,
     end,
+  have hε1: 1 - ε < 1 :=
+    begin
+    simp,
+    exact hε.1,
+  end,
   have ε_0 : 0 < x ^ (1 - ε) := 
     begin
       exact rpow_pos_of_pos x_0 (1 - ε),
