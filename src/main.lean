@@ -80,6 +80,31 @@ begin
   ... < 1 : one_half_lt_one,
 end
 
+lemma range_sub_eq_Ioc {f : ℕ → ℝ}(a b : ℕ) (h: a ≤ b) : (∑ (n : ℕ) in finset.filter nat.prime (finset.range (b+1)), f n) 
+- (∑ (n : ℕ) in finset.filter nat.prime (finset.range (a+1)), f n)
+= (∑ (n : ℕ) in finset.filter nat.prime (finset.Ioc a b), f n):=
+  begin
+    rw finset.range_eq_Ico,
+    have h₁: finset.Ico 0 (b + 1) \ finset.Ico 0 (a + 1) = finset.Ioc a b:=
+      begin
+      rw finset.Ico_diff_Ico_left,
+      simp,
+      rw ←nat.Ico_succ_succ,
+      end,
+    rw ← h₁,
+    rw sub_eq_iff_eq_add,
+    symmetry,
+    have h₂: finset.filter nat.prime (finset.Ico 0 (a + 1)) ⊆ finset.filter nat.prime (finset.Ico 0 (b + 1)):=
+      begin
+      have h₂₁: finset.Ico 0 (a + 1)⊆ finset.Ico 0 (b + 1):=begin
+      sorry,
+      end,
+    rw ←finset.sum_sdiff h₂,
+    simp,
+    have h₃: finset.filter nat.prime (finset.range (b + 1) \ finset.range (a + 1))= finset.filter nat.prime (finset.range (b + 1)) \ finset.filter nat.prime (finset.range (a + 1)):=sorry,
+    rw h₃,
+  end
+
 lemma theta_lower_bound_2 (ε x : ℝ)(hε : 0 < ε ∧ ε ≤ 1 /2)(hx : 1 < x) : (1 - ε) * ((π ⌊x⌋₊ : ℝ) - (π ⌊x ^ (1 - ε)⌋₊ : ℝ)) * log x ≤ ϑ x := 
 begin
   unfold chebyshev_first,
