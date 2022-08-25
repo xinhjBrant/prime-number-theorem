@@ -114,6 +114,23 @@ begin
       rw real.log_rpow x_0 (1 - ε),
       rw mul_comm,
     end,
+  have pow1_ε: ⌊x ^ (1 - ε)⌋₊ ≤ ⌊x⌋₊:= begin
+    have hx_ε : (x ^ (1 - ε)) < (x^(1:ℝ)) := begin
+      rw real.rpow_lt_rpow_left_iff,
+      exact hε1,
+      exact hx,
+    end,
+    simp at hx_ε,
+    have pow1_ε_lt: ⌊x ^ (1 - ε)⌋₊ < ⌊x⌋₊ :=
+      begin
+    -- theorem nat.floor_lt_ceil_of_lt_of_pos  {a b : α} (h : a < b) (h' : 0 < b) :
+    -- ⌊a⌋₊ < ⌈b⌉₊
+    -- fail to unify
+      sorry,
+      end,
+    apply le_of_lt,
+    exact pow1_ε_lt,
+    end,
   have h₁: 0 < log x * (1 - ε):=
     begin
     have h₁₁: 0 < log x:= log_pos hx,
