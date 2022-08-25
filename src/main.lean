@@ -197,16 +197,12 @@ begin
       exact h₃₁₂,
       exact hlog,
     end,
-  have h₄: (((∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), real.log n) - 
-  (∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), real.log n)) / (log x * (1 - ε)))
-  = ((∑ (n : ℕ) in finset.filter nat.prime  ((finset.Ioc (⌊x ^ (1 - ε)⌋₊)) (⌊x⌋₊)), real.log n) / (log x * (1 - ε))) :=sorry,
-
-  have h₅: ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x⌋₊ + 1)), (1 : ℝ)- 
-  ∑ (n : ℕ) in finset.filter nat.prime (finset.range (⌊x ^ (1 - ε)⌋₊ + 1)), (1 : ℝ)=
-  ∑ (n : ℕ) in finset.filter nat.prime (finset.Ioc (⌊x ^ (1 - ε)⌋₊) (⌊x⌋₊)), (1 : ℝ):=sorry,
-
-  rw ← h₄ at h₃,
-  rw ← h₅ at h₃, 
+  rw ←range_sub_eq_Ioc at h₃,
+  rw ←range_sub_eq_Ioc at h₃,
+  exact le_trans h₃ h₂,
+  exact hpow,
+  exact hpow,
+  have h₄ : 0 < log x := log_pos hx,
   exact le_trans h₃ h₂,
   have h₆ : 0 < log x := log_pos hx,
   apply (zero_lt_mul_left h₆).mpr,
