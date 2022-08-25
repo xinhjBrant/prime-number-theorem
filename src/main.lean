@@ -245,9 +245,7 @@ begin
   exact pow1_ε,
   exact pow1_ε,
   have h₄ : 0 < log x := log_pos hx,
-  exact le_trans h₃ h₂,
-  have h₆ : 0 < log x := log_pos hx,
-  apply (zero_lt_mul_left h₆).mpr,
+  apply (zero_lt_mul_left h₄).mpr,
   rw lt_sub,
   simp,
   calc
