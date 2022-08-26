@@ -756,6 +756,19 @@ end
 - # Addictivity
 -/
 
+lemma contour_integral_congr {f g: ℂ → E}{L:ℝ→ ℂ}
+(hfg: set.eq_on f g (set.image L (set.interval 0 1))):
+contour_integral f L = contour_integral g L :=
+begin
+  unfold contour_integral,
+  apply interval_integral.integral_congr,
+  intros x x_in, simp,
+  have Lx_in: L x∈ (set.image L (set.interval 0 1)):=
+    set.mem_image_of_mem L x_in,
+  have hfg':=hfg Lx_in,
+  rwa hfg',
+end
+
 @[simp] lemma contour_integral_along_constant_path 
 (f : ℂ → E) (z:ℂ) :
 contour_integral f (constant_path z) = 0 :=

@@ -1,4 +1,6 @@
 import contourintegral
+import analysis.calculus.dslope
+import analysis.complex.cauchy_integral
 noncomputable theory
 
 variables {E : Type} 
@@ -161,6 +163,13 @@ begin
   simp at t, exact t,
 end
 
+lemma image_rectangle_sub{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r):
+set.image (rectangle b r t l) (set.interval 0 1)
+⊆ (set.interval l r ×ℂ set.interval b t) :=
+begin
+  sorry,
+end
+
 @[protected] lemma rec_bottomright_continuous_on(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
 continuous_on (rec_bottomright b r t l) (set.interval 0 1):=
 path_concatenation_continuous_on 
@@ -321,7 +330,7 @@ lemma integral_along_rectangle_left(f:ℂ → E)
        rw interval_integral.integral_symm, simp, }
 
 @[protected] lemma integral_along_rectangle_bottomright' 
-{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+{f:ℂ → E}{b r t l: ℝ}
 (hf: continuous_on f 
   (set.image (rec_bottomright b r t l) (set.interval 0 1))):
   contour_integral f (rec_bottomright b r t l)
@@ -332,7 +341,7 @@ contour_integral_along_piecewise_path' hf
 (deriv_rec_bottomright_integrable b r t l)
 
 @[protected] lemma integral_along_rectangle_topleft' 
-{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+{f:ℂ → E}{b r t l: ℝ}
 (hf: continuous_on f 
   (set.image (rec_topleft b r t l) (set.interval 0 1))):
   contour_integral f (rec_topleft b r t l)
@@ -343,7 +352,7 @@ contour_integral_along_piecewise_path' hf
 (deriv_rec_topleft_integrable b r t l)
 
 theorem integral_along_rectangle'
-{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+{f:ℂ → E}{b r t l: ℝ}
 (hf: continuous_on f 
   (set.image (rectangle b r t l) (set.interval 0 1))):
   contour_integral f (rectangle b r t l)
@@ -360,8 +369,8 @@ begin
        (path_concatenation_image_left_subset (br_join_tl b r t l)),
   have hftl:=continuous_on.mono hf 
        (path_concatenation_image_right_subset (br_join_tl b r t l)),
-  rw integral_along_rectangle_bottomright' b r t l hfbr,
-  rw integral_along_rectangle_topleft' b r t l hftl,
+  rw integral_along_rectangle_bottomright' hfbr,
+  rw integral_along_rectangle_topleft' hftl,
   rw ← add_assoc (contour_integral f (rec_bottom l b r) + 
   contour_integral f (rec_right b r t)) _ _,
   rw add_assoc _ (contour_integral f (rec_right b r t)) 
@@ -376,7 +385,7 @@ by {have t: -b=0-b:= by simp, rw t,
     rw ← add_sub_assoc, simp,}
 
 theorem integral_along_rectangle
-{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+{f:ℂ → E}{b r t l: ℝ}
 (hf: continuous_on f 
   (set.image (rectangle b r t l) (set.interval 0 1))):
   contour_integral f (rectangle b r t l)
@@ -385,7 +394,7 @@ theorem integral_along_rectangle
   + (complex.I • ∫ (x: ℝ) in b..t, f(r+x*complex.I)))
   - (complex.I • ∫ (x: ℝ) in b..t, f(l+x*complex.I)) :=
 begin
-  rw integral_along_rectangle' b r t l hf,
+  rw integral_along_rectangle' hf,
   rw integral_along_rectangle_bottom,
   rw integral_along_rectangle_top,
   rw integral_along_rectangle_right,
@@ -398,10 +407,108 @@ end
 - # Cauchy Theorem on Rectangles
 -/
 
+theorem Cauchy_Goursat_rectangle {f : ℂ → E} (c: ℂ) 
+{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t)) 
+(Hd : ∀ (x : ℂ), x ∈ (set.Ioo l r ×ℂ set.Ioo b t) \ {c} 
+→ differentiable_at ℂ f x) :
+contour_integral f (rectangle b r t l) = 0 :=
+begin
+  have hf: continuous_on f 
+       (set.image (rectangle b r t l) (set.interval 0 1)):=
+       continuous_on.mono Hc (image_rectangle_sub bt lr),
+  rw integral_along_rectangle hf,
+  let s:set ℂ:={c},
+  have hs:s.countable:=set.to_countable s,
+  let z:ℂ:={re:=l,im:=b},
+  let w:ℂ:={re:=r,im:=t},
+  have z_re : l = z.re := rfl,
+  have w_re : r = w.re := rfl,
+  have z_im : b = z.im := rfl,
+  have w_im : t = w.im := rfl,
+  have hl : l = linear_order.min z.re w.re := 
+    by {rw [←z_re, ←w_re], symmetry, exact min_eq_left lr,},
+  have hr : r = linear_order.max z.re w.re := 
+    by {rw [←z_re, ←w_re], symmetry, exact max_eq_right lr,},
+  have hb : b = linear_order.min z.im w.im := 
+    by {rw [←z_im, ←w_im], symmetry, exact min_eq_left bt,},
+  have ht : t = linear_order.max z.im w.im := 
+    by {rw [←z_im, ←w_im], symmetry, exact max_eq_right bt,},
+  rw [z_re, w_re, z_im, w_im] at Hc,
+  rw [hl, hr, hb, ht] at Hd,
+  have t:=complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable 
+           f z w s hs Hc Hd,
+  exact t,
+end
+
 /-! Part V. Formalize the Cauchy integral formula on rectangles. 
 
 - # Cauchy Integral Formula on Rectangles
 -/
+lemma dslope_eq_on{f : ℂ → E}{c: ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+set.eq_on (dslope f c) (λz:ℂ, (z-c)⁻¹•f(z)- (z-c)⁻¹•f(c)) 
+(set.image (rectangle b r t l) (set.interval 0 1)):=
+begin
+  sorry,
+end
+
+lemma dslope_continuous_on {f : ℂ → E}{c: ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t))
+(Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
+continuous_on (dslope f c) (set.interval l r ×ℂ set.interval b t):=
+begin
+  have c_in_Ioo_prod: c∈ (set.Ioo l r ×ℂ set.Ioo b t):=
+    by sorry,
+  have hs:(set.interval l r ×ℂ set.interval b t)∈ nhds c:=
+    by sorry,
+  rw continuous_on_dslope hs,
+  split,
+  exact Hc,
+  sorry,
+end
+
+lemma dslope_differentiable_at {f : ℂ → E}{c: ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t))
+(Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
+∀ (x : ℂ), x ∈ set.Ioo l r ×ℂ set.Ioo b t \ {c} → 
+differentiable_at ℂ (dslope f c) x :=
+begin
+  intros x x_in,
+  have x_ne_c: x ≠ c:= by sorry,
+  rw differentiable_at_dslope_of_ne x_ne_c,
+  sorry,
+end
+
+lemma dslope_zero_integral {f : ℂ → E} {c: ℂ}
+{b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t))
+(Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
+contour_integral (dslope f c) (rectangle b r t l) = 0 :=
+begin
+  have bt: b≤ t:= by sorry,
+  have lr: l≤ r:= by sorry,
+  apply Cauchy_Goursat_rectangle c bt lr,
+  exact dslope_continuous_on bc ct lc cr Hc Hd,
+  exact dslope_differentiable_at bc ct lc cr Hc Hd,
+end
+
+lemma Cauchy_integral_formula_rectangle_pre{f : ℂ → E} {c: ℂ}
+{b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t))
+(Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
+contour_integral (λz:ℂ, (z-c)⁻¹•f(z)) (rectangle b r t l)=
+contour_integral (λz:ℂ, (z-c)⁻¹•f(c)) (rectangle b r t l):=
+begin
+  sorry,
+end
 
 /-! Part VI. (perhaps irrelevant) Define circles. 
 
