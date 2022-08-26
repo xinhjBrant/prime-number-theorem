@@ -4,7 +4,11 @@ noncomputable theory
 variables {E : Type} 
 [normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
-/-- Part I. Define line segments -/
+/-! Part I. Define line segments 
+
+- # Line Segments
+-/
+
 def line_segment (a:ℂ) (b:ℂ) : ℝ → ℂ :=
   λ (θ : ℝ) , (b-a) * θ + a
 
@@ -78,6 +82,10 @@ lemma line_is_continuous (a:ℂ )(b:ℂ ):
   continuous (line_segment a b):=
   by {exact differentiable.continuous (line_is_differentiable a b),}
 
+lemma line_is_continuous_on (a:ℂ )(b:ℂ ):
+  continuous_on (line_segment a b) (set.interval 0 1):=
+  (line_is_continuous a b).continuous_on
+
 lemma line_is_in_C1 (a:ℂ )(b:ℂ):
   continuous (deriv (line_segment a b)):=
 begin
@@ -85,7 +93,16 @@ begin
   exact continuity_of_constant_path (b-a),
 end
 
-/-- Part II. Define rectangles -/
+lemma deriv_line_integrable (a:ℂ)(b:ℂ):
+  interval_integrable (deriv (line_segment a b)) 
+  measure_theory.measure_space.volume 0 1:=
+continuous.interval_integrable (line_is_in_C1 a b) 0 1
+
+/-! Part II. Define rectangles 
+
+- # Rectangles
+-/
+
 def rec_bottom (l:ℝ)(b:ℝ)(r:ℝ):=
   line_segment (l+b*complex.I) (r+b*complex.I)
 def rec_right (b:ℝ)(r:ℝ)(t:ℝ):=
@@ -95,7 +112,7 @@ def rec_top (r:ℝ)(t:ℝ)(l:ℝ):=
 def rec_left (t:ℝ)(l:ℝ)(b:ℝ):=
   line_segment (l+t*complex.I) (l+b*complex.I)
 
-lemma bottom_join_right (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) : 
+@[protected] lemma bottom_join_right (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) : 
   rec_bottom l b r 1 = rec_right b r t 0:=
 begin
   rw rec_bottom, rw rec_right, repeat {rw line_segment,}, 
@@ -105,7 +122,7 @@ end
 def rec_bottomright (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) :=
   path_concatenation (bottom_join_right b r t l) 
 
-lemma top_join_left (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) : 
+@[protected] lemma top_join_left (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) : 
   rec_top r t l 1 = rec_left t l b 0:=
 begin
   rw rec_top, rw rec_left, repeat {rw line_segment,}, 
@@ -115,7 +132,7 @@ end
 def rec_topleft (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) :=
   path_concatenation (top_join_left b r t l) 
 
-lemma br_join_tl (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) :
+@[protected] lemma br_join_tl (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) :
   rec_bottomright b r t l 1 = rec_topleft b r t l 0 :=
 begin
   rw [rec_bottomright, rec_topleft],
@@ -127,7 +144,73 @@ end
 def rectangle (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) := 
   path_concatenation (br_join_tl b r t l) 
 
-/-- Part III. Define integrals along rectangles. -/
+lemma image_rec_bottom {l:ℝ}(b:ℝ){r:ℝ}(lr:l≤ r):
+set.image (rec_bottom l b r) (set.interval 0 1)
+⊆  {z:ℂ | l≤ z.re ∧ z.re≤ r ∧ z.im = b} :=
+begin
+  unfold rec_bottom, unfold line_segment, 
+  simp, unfold set.Icc, simp,
+  intros a a_ge a_le, split, 
+  apply mul_nonneg,
+  simp, exact lr, exact a_ge,
+  have temp: (r-l)*a≤ r-l :=
+    by {apply mul_nonneg_le_one_le, 
+    simp, exact lr, exact rfl.ge, 
+    exact a_ge, exact a_le,},
+  have t:=add_le_add_right temp l,
+  simp at t, exact t,
+end
+
+@[protected] lemma rec_bottomright_continuous_on(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
+continuous_on (rec_bottomright b r t l) (set.interval 0 1):=
+path_concatenation_continuous_on 
+(bottom_join_right b r t l)
+(line_is_continuous_on (l+b*complex.I) (r+b*complex.I))
+(line_is_continuous_on (r+b*complex.I) (r+t*complex.I))
+
+@[protected] lemma rec_topleft_continuous_on(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
+continuous_on (rec_topleft b r t l) (set.interval 0 1):=
+path_concatenation_continuous_on 
+(top_join_left b r t l)
+(line_is_continuous_on (r+t*complex.I) (l+t*complex.I))
+(line_is_continuous_on (l+t*complex.I) (l+b*complex.I))
+
+lemma rectangle_continuous_on(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
+continuous_on (rectangle b r t l) (set.interval 0 1):=
+path_concatenation_continuous_on 
+(br_join_tl b r t l)
+(rec_bottomright_continuous_on b r t l)
+(rec_topleft_continuous_on b r t l)
+
+@[protected] lemma deriv_rec_bottomright_integrable(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
+interval_integrable (deriv (rec_bottomright b r t l))
+measure_theory.measure_space.volume 0 1 :=
+path_concatenation_deriv_integrable
+(bottom_join_right b r t l)
+(deriv_line_integrable (l+b*complex.I) (r+b*complex.I))
+(deriv_line_integrable (r+b*complex.I) (r+t*complex.I))
+
+@[protected] lemma deriv_rec_topleft_integrable(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
+interval_integrable (deriv (rec_topleft b r t l))
+measure_theory.measure_space.volume 0 1 :=
+path_concatenation_deriv_integrable
+(top_join_left b r t l)
+(deriv_line_integrable (r+t*complex.I) (l+t*complex.I))
+(deriv_line_integrable (l+t*complex.I) (l+b*complex.I))
+
+lemma deriv_rectangle_integrable(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
+interval_integrable (deriv (rectangle b r t l))
+measure_theory.measure_space.volume 0 1 :=
+path_concatenation_deriv_integrable
+(br_join_tl b r t l)
+(deriv_rec_bottomright_integrable b r t l)
+(deriv_rec_topleft_integrable b r t l)
+
+/-! Part III. Define integrals along rectangles
+
+- # Integral along Rectangles
+-/
+
 def complex_affine (α:ℂ)(c:ℂ):ℂ→ ℂ:=λz, α*z+c
 
 lemma contour_integral_under_affine (f:ℂ → E)
@@ -209,13 +292,121 @@ begin
   rw integral_along_reals _ a b,
 end
 
--- lemma integral_along_rectangle
+lemma integral_along_rectangle_bottom(f:ℂ → E)
+(l:ℝ)(b:ℝ)(r:ℝ):
+  contour_integral f (rec_bottom l b r) 
+  = ∫ (x: ℝ) in l..r, f(x+b*complex.I) :=
+  integral_along_horizontal_line f l r b
 
-/-- Part IV. Formalize the Cauchy theorem on rectangles. -/
+lemma integral_along_rectangle_right(f:ℂ → E)
+(b:ℝ)(r:ℝ)(t:ℝ):
+  contour_integral f (rec_right b r t) 
+  = complex.I • ∫ (x: ℝ) in b..t, f(r+x*complex.I) :=
+  integral_along_vertical_line f b t r
 
-/- Part V. Formalize the Cauchy integral formula on rectangles. -/
+lemma integral_along_rectangle_top(f:ℂ → E)
+(r:ℝ)(t:ℝ)(l:ℝ):
+  contour_integral f (rec_top r t l) 
+  = - ∫ (x: ℝ) in l..r, f(x+t*complex.I) :=
+  by { unfold rec_top,
+       rw integral_along_horizontal_line f r l t,
+       rw interval_integral.integral_symm, }
 
-/- Part VI. (perhaps irrelevant) Define circles. -/
+lemma integral_along_rectangle_left(f:ℂ → E)
+(t:ℝ)(l:ℝ)(b:ℝ):
+  contour_integral f (rec_left t l b) 
+  = - complex.I • ∫ (x: ℝ) in b..t, f(l+x*complex.I) :=
+  by { unfold rec_left,
+       rw integral_along_vertical_line f t b l,
+       rw interval_integral.integral_symm, simp, }
+
+@[protected] lemma integral_along_rectangle_bottomright' 
+{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+(hf: continuous_on f 
+  (set.image (rec_bottomright b r t l) (set.interval 0 1))):
+  contour_integral f (rec_bottomright b r t l)
+  = (contour_integral f (rec_bottom l b r))
+  + (contour_integral f (rec_right b r t)):=
+contour_integral_along_piecewise_path' hf 
+(rec_bottomright_continuous_on b r t l)
+(deriv_rec_bottomright_integrable b r t l)
+
+@[protected] lemma integral_along_rectangle_topleft' 
+{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+(hf: continuous_on f 
+  (set.image (rec_topleft b r t l) (set.interval 0 1))):
+  contour_integral f (rec_topleft b r t l)
+  = (contour_integral f (rec_top r t l))
+  + (contour_integral f (rec_left t l b)):=
+contour_integral_along_piecewise_path' hf 
+(rec_topleft_continuous_on b r t l)
+(deriv_rec_topleft_integrable b r t l)
+
+theorem integral_along_rectangle'
+{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+(hf: continuous_on f 
+  (set.image (rectangle b r t l) (set.interval 0 1))):
+  contour_integral f (rectangle b r t l)
+  = (((contour_integral f (rec_bottom l b r))
+  + (contour_integral f (rec_top r t l)))
+  + (contour_integral f (rec_right b r t)))
+  + (contour_integral f (rec_left t l b)) :=
+begin
+  unfold rectangle,
+  rw contour_integral_along_piecewise_path' hf 
+     (rectangle_continuous_on b r t l)
+     (deriv_rectangle_integrable b r t l),
+  have hfbr:=continuous_on.mono hf 
+       (path_concatenation_image_left_subset (br_join_tl b r t l)),
+  have hftl:=continuous_on.mono hf 
+       (path_concatenation_image_right_subset (br_join_tl b r t l)),
+  rw integral_along_rectangle_bottomright' b r t l hfbr,
+  rw integral_along_rectangle_topleft' b r t l hftl,
+  rw ← add_assoc (contour_integral f (rec_bottom l b r) + 
+  contour_integral f (rec_right b r t)) _ _,
+  rw add_assoc _ (contour_integral f (rec_right b r t)) 
+  (contour_integral f (rec_top r t l) ),
+  rw add_comm (contour_integral f (rec_right b r t)) 
+  (contour_integral f (rec_top r t l) ),
+  rw ← add_assoc (contour_integral f (rec_bottom l b r)) _ _,
+end
+
+@[simp] lemma addminus{a:E}{b:E}: a+(-b)=a - b:= 
+by {have t: -b=0-b:= by simp, rw t,
+    rw ← add_sub_assoc, simp,}
+
+theorem integral_along_rectangle
+{f:ℂ → E}(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ)
+(hf: continuous_on f 
+  (set.image (rectangle b r t l) (set.interval 0 1))):
+  contour_integral f (rectangle b r t l)
+  = (((∫ (x: ℝ) in l..r, f(x+b*complex.I))
+  - (∫ (x: ℝ) in l..r, f(x+t*complex.I)))
+  + (complex.I • ∫ (x: ℝ) in b..t, f(r+x*complex.I)))
+  - (complex.I • ∫ (x: ℝ) in b..t, f(l+x*complex.I)) :=
+begin
+  rw integral_along_rectangle' b r t l hf,
+  rw integral_along_rectangle_bottom,
+  rw integral_along_rectangle_top,
+  rw integral_along_rectangle_right,
+  rw integral_along_rectangle_left,
+  simp,
+end
+
+/-! Part IV. Formalize the Cauchy theorem on rectangles. 
+
+- # Cauchy Theorem on Rectangles
+-/
+
+/-! Part V. Formalize the Cauchy integral formula on rectangles. 
+
+- # Cauchy Integral Formula on Rectangles
+-/
+
+/-! Part VI. (perhaps irrelevant) Define circles. 
+
+- # Circles
+-/
 
 def circle_loop(c : ℂ) (R : ℝ) : ℝ → ℂ := 
   λ θ, c + R * complex.exp (θ * 2 * real.pi* complex.I)

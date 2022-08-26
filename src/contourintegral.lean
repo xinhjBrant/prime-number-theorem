@@ -318,12 +318,6 @@ begin
   exact h4,
 end
 
-lemma continuity_of_constant_path (z:ℂ): continuous (constant_path z):=
-begin
-  rw constant_path,
-  exact continuous_const,
-end
-
 lemma path_concatenation_image{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
 set.image (path_concatenation hw) (set.interval 0 1)
 =(set.image L1 (set.interval 0 1))∪ 
@@ -377,6 +371,28 @@ begin
   apply le_trans tt, ring_nf,
   have xneg:¬ x'<0:= by {simp, exact x_in_h.1.1,},
   rw if_neg xneg, exact x_in_h.2,
+end
+
+lemma path_concatenation_image_left_subset
+{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+set.image L1 (set.interval 0 1) ⊆ 
+set.image (path_concatenation hw) (set.interval 0 1):=
+by { rw path_concatenation_image hw,
+     exact (L1 '' set.interval 0 1).subset_union_left 
+       (L2 '' set.interval 0 1), }
+
+lemma path_concatenation_image_right_subset
+{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+set.image L2 (set.interval 0 1) ⊆ 
+set.image (path_concatenation hw) (set.interval 0 1):=
+by { rw path_concatenation_image hw,
+     exact (L1 '' set.interval 0 1).subset_union_right 
+       (L2 '' set.interval 0 1), }
+
+lemma continuity_of_constant_path (z:ℂ): continuous (constant_path z):=
+begin
+  rw constant_path,
+  exact continuous_const,
 end
 
 lemma general_piece_continuous_on(L:ℝ→ ℂ)
@@ -857,7 +873,7 @@ end
 
 /- The integral along the path L1∪L2 is equal to the sum of integrals along L1 and L2. -/
 theorem contour_integral_along_piecewise_path{f : ℂ → E}
-{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0)
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} {hw: L1 1=L2 0}
 (hi: contour_integrable f (path_concatenation hw)):
 contour_integral f (path_concatenation hw) = 
 contour_integral f L1 + contour_integral f L2 :=
@@ -873,8 +889,21 @@ end
 
 /- A useful version of the previous theorem -/
 theorem contour_integral_along_piecewise_path'{f : ℂ → E}
-{L1:ℝ → ℂ}{L2:ℝ → ℂ} (hw: L1 1=L2 0)
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} {hw: L1 1=L2 0}
 (hf: continuous_on f (set.image (path_concatenation hw) (set.interval 0 1)))
+(hlc: continuous_on (path_concatenation hw) (set.interval 0 1))
+(hli: interval_integrable (deriv ((path_concatenation hw))) 
+       measure_theory.measure_space.volume 0 1):
+contour_integral f (path_concatenation hw) = 
+contour_integral f L1 + contour_integral f L2 :=
+contour_integral_along_piecewise_path
+(contour_integrable_smul_continuous_on hf hlc hli)
+
+/- Even more useful -/
+theorem contour_integral_along_piecewise_path''{f : ℂ → E}
+{L1:ℝ → ℂ}{L2:ℝ → ℂ} {hw: L1 1=L2 0}
+(hf: continuous_on f ((set.image L1 (set.interval 0 1))∪ 
+     (set.image L2 (set.interval 0 1))))
 (hl1c: continuous_on L1 (set.interval 0 1))
 (hl2c: continuous_on L2 (set.interval 0 1))
 (hl1i: interval_integrable (deriv L1) measure_theory.measure_space.volume 0 1)
@@ -882,9 +911,8 @@ theorem contour_integral_along_piecewise_path'{f : ℂ → E}
 contour_integral f (path_concatenation hw) = 
 contour_integral f L1 + contour_integral f L2 :=
 begin
-  apply contour_integral_along_piecewise_path hw,
-  apply contour_integrable_smul_continuous_on,
-  exact hf,
+  apply contour_integral_along_piecewise_path',
+  rw ← path_concatenation_image hw at hf, exact hf,
   exact path_concatenation_continuous_on hw hl1c hl2c,
   exact path_concatenation_deriv_integrable hw hl1i hl2i,
 end
