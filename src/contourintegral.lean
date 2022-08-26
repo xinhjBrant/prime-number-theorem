@@ -324,6 +324,61 @@ begin
   exact continuous_const,
 end
 
+lemma path_concatenation_image{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
+set.image (path_concatenation hw) (set.interval 0 1)
+=(set.image L1 (set.interval 0 1))∪ 
+(set.image L2 (set.interval 0 1)) :=
+begin
+  ext1, split,
+  have md: (0:ℝ)<(2:ℝ):= by simp,
+  have mn: (0:ℝ)≤(2:ℝ):= le_of_lt md,
+  intro x_in,
+  rw path_concatenation at *,
+  simp, simp at x_in,
+  cases x_in with x',
+  by_cases x'<(2⁻¹:ℝ),
+  rw if_pos h at x_in_h, 
+  left, use 2*x',
+  split, split,
+  simp, exact x_in_h.1.1,
+  apply le_of_lt,
+  have t:=mul_lt_mul_of_pos_left h md, 
+  simp at t, exact t, exact x_in_h.2,
+  rw if_neg h at x_in_h, 
+  right, use (-1+2*x'),
+  simp at h, split, split, 
+  simp, have t:=mul_le_mul_of_nonneg_left h mn,
+  simp at t, exact t, 
+  simp, ring_nf, simp, exact x_in_h.1.2,
+  exact x_in_h.2,
+  intro x_in,
+  rw path_concatenation at *, 
+  simp, simp at x_in,
+  cases x_in, cases x_in with x',
+  use (2⁻¹:ℝ)*x',
+  simp, split, split,
+  exact x_in_h.1.1,
+  have t:=mul_le_mul_of_nonneg_left x_in_h.1.2 zero_leq_frac_1_2,
+  apply le_trans t, simp,
+  by_cases x'<1,
+  rw if_pos h, exact x_in_h.2,
+  rw if_neg h, simp at h,
+  have t:x'=1 :=
+    by {apply ge_antisymm, exact h, exact x_in_h.1.2,},
+  rw t, rw t at x_in_h, simp,
+  rw ← hw, exact x_in_h.2,
+  cases x_in with x',
+  use (2⁻¹:ℝ)*(1+x'),
+  simp, split, split,
+  apply le_trans x_in_h.1.1,
+  simp, 
+  have t:=add_le_add_left x_in_h.1.2 1, 
+  have tt:=mul_le_mul_of_nonneg_left t zero_leq_frac_1_2,
+  apply le_trans tt, ring_nf,
+  have xneg:¬ x'<0:= by {simp, exact x_in_h.1.1,},
+  rw if_neg xneg, exact x_in_h.2,
+end
+
 lemma general_piece_continuous_on(L:ℝ→ ℂ)
 {k:ℝ}(hk:0 ≤ k)(b:ℝ)(lef:ℝ)(ref:ℝ)
 (hlc:continuous_on L (set.interval (b+k*lef) (b+k*ref))):
