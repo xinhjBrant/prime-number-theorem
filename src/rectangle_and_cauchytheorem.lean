@@ -361,13 +361,108 @@ lemma image_rectangle_sub_closure{b r t l:ℝ}
 set.image (rectangle b r t l) (set.interval 0 1)
 ⊆ (set.interval l r ×ℂ set.interval b t) :=
 begin
-  intros x x_in,
-  rw image_rectangle' bt lr at x_in,
-  apply point_in_closure_rectangle,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
+  rw image_rectangle' bt lr,
+  apply set.union_subset,
+  apply set.union_subset,
+  {
+    intros x x_in,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_bottom b lr) x_in, 
+    simp at x_in', 
+    apply point_in_closure_rectangle,
+    exact eq.ge x_in'.2.2,
+    rw x_in'.2.2, exact bt,
+    exact x_in'.1, exact x_in'.2.1,
+  },
+  {
+    intros x x_in,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_right r bt) x_in, 
+    simp at x_in', 
+    apply point_in_closure_rectangle,
+    exact x_in'.1, exact x_in'.2.1,
+    rw x_in'.2.2, exact lr,
+    exact (eq.symm x_in'.2.2).ge,
+  },
+  apply set.union_subset,
+  {
+    intros x x_in,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_top t lr) x_in, 
+    simp at x_in', 
+    apply point_in_closure_rectangle,
+    rw x_in'.2.2, exact bt,
+    exact (eq.symm x_in'.2.2).ge,
+    exact x_in'.1, exact x_in'.2.1,
+  },
+  {
+    intros x x_in,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_left l bt) x_in, 
+    simp at x_in', 
+    apply point_in_closure_rectangle,
+    exact x_in'.1, exact x_in'.2.1,
+    exact eq.ge x_in'.2.2,
+    rw x_in'.2.2, exact lr,
+  },
+end
+
+lemma image_rectangle_sub_compl_center{c: ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+set.image (rectangle b r t l) (set.interval 0 1) ⊆ {c}ᶜ :=
+begin
+  have b_lt_t : b<t := lt_trans bc ct,
+  have l_lt_r : l<r := lt_trans lc cr,
+  have bt: b≤ t:= le_of_lt b_lt_t,
+  have lr: l≤ r:= le_of_lt l_lt_r,
+  rw image_rectangle' bt lr,
+  rw set.union_subset_iff, split,
+  rw set.union_subset_iff, split,
+  {
+    intros x x_in, simp, intro x_c,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_bottom b lr) x_in, 
+    simp at x_in', rw x_c at x_in',
+    rw x_in'.2.2 at bc, simp at bc, exact bc,
+  },
+  {
+    intros x x_in, simp, intro x_c,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_right r bt) x_in, 
+    simp at x_in', rw x_c at x_in',
+    rw x_in'.2.2 at cr, simp at cr, exact cr,
+  },
+  rw set.union_subset_iff, split,
+  {
+    intros x x_in, simp, intro x_c,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_top t lr) x_in, 
+    simp at x_in', rw x_c at x_in',
+    rw x_in'.2.2 at ct, simp at ct, exact ct,
+  },
+  {
+    intros x x_in, simp, intro x_c,
+    have x_in':=set.mem_of_subset_of_mem 
+      (image_rec_left l bt) x_in, 
+    simp at x_in', rw x_c at x_in',
+    rw x_in'.2.2 at lc, simp at lc, exact lc,
+  },
+end
+
+lemma image_rectangle_sub_closure_inter_compl_center
+{c: ℂ}{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+set.image (rectangle b r t l) (set.interval 0 1) ⊆ 
+(set.interval l r ×ℂ set.interval b t) ∩ {c}ᶜ :=
+begin
+  have b_lt_t : b<t := lt_trans bc ct,
+  have l_lt_r : l<r := lt_trans lc cr,
+  have bt: b≤ t:= le_of_lt b_lt_t,
+  have lr: l≤ r:= le_of_lt l_lt_r,
+  rw set.subset_inter_iff, split,
+  exact image_rectangle_sub_closure bt lr,
+  exact image_rectangle_sub_compl_center bc ct lc cr,
 end
 
 @[protected] lemma rec_bottomright_continuous_on(b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ):
@@ -646,13 +741,26 @@ end
 - # Cauchy Integral Formula on Rectangles
 -/
 
+lemma zero_exact{a b:E}(h:0=a-b):a=b:=
+begin
+  have b_z: b=b+0:= by simp,
+  rw h at b_z,
+  rw b_z, simp,
+end
+
 lemma dslope_eq_on{f : ℂ → E}{c: ℂ}
 {b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
-set.eq_on (dslope f c) (λz:ℂ, (z-c)⁻¹•f(z)- (z-c)⁻¹•f(c)) 
+set.eq_on (dslope f c) (λz:ℂ, (z-c)⁻¹•f(z) - (z-c)⁻¹•f(c)) 
 (set.image (rectangle b r t l) (set.interval 0 1)):=
 begin
-  sorry,
+  apply set.eq_on.mono 
+    (image_rectangle_sub_compl_center bc ct lc cr),
+  have func_eq:(λz:ℂ, (z-c)⁻¹•f(z) - (z-c)⁻¹•f(c))=
+    slope f c := 
+    by {ext1, rw slope_def_module f c x, rw smul_sub,},
+  rw func_eq,
+  exact eq_on_dslope_slope f c,
 end
 
 lemma dslope_continuous_on {f : ℂ → E}{c: ℂ}
@@ -702,6 +810,20 @@ begin
   exact dslope_differentiable_at bc ct lc cr Hc Hd,
 end
 
+lemma part_of_dslope_continuous{f : ℂ → E} {c: ℂ}
+{b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t)):
+continuous_on ((λ (z : ℂ), (z - c)⁻¹) • f) 
+(rectangle b r t l '' set.interval 0 1) :=
+begin
+  apply continuous_on.mono _
+    (image_rectangle_sub_closure_inter_compl_center bc ct lc cr),
+  rw continuous_on,
+  intros x x_in,
+  sorry,
+end
+
 lemma Cauchy_integral_formula_rectangle_pre{f : ℂ → E} {c: ℂ}
 {b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r)
@@ -710,7 +832,45 @@ lemma Cauchy_integral_formula_rectangle_pre{f : ℂ → E} {c: ℂ}
 contour_integral (λz:ℂ, (z-c)⁻¹•f(z)) (rectangle b r t l)=
 contour_integral (λz:ℂ, (z-c)⁻¹•f(c)) (rectangle b r t l):=
 begin
-  sorry,
+  have func_eq:(λz:ℂ, (z-c)⁻¹•f(z) - (z-c)⁻¹•f(c))=
+  (λz:ℂ, (z-c)⁻¹•f(z))-(λz:ℂ, (z-c)⁻¹•f(c)):=
+    by {ext1, simp,},
+  have left_func:(λ (z : ℂ), (z - c)⁻¹ • f z) =
+  (λ (z : ℂ), (z - c)⁻¹) • f:=
+    by {ext1, simp,},
+  have right_func:(λ (z : ℂ), (z - c)⁻¹ • f c) =
+  (λ (z : ℂ), (z - c)⁻¹) • (λ (z:ℂ), f c) :=
+    by {ext1, simp,},
+  have int_z:=dslope_zero_integral bc ct lc cr Hc Hd,
+  rw contour_integral_congr (dslope_eq_on bc ct lc cr) at int_z,
+  rw func_eq at int_z,
+  have int_sub:contour_integral ((λ (z : ℂ), (z - c)⁻¹ • f z) - 
+  λ (z : ℂ), (z - c)⁻¹ • f c) (rectangle b r t l) = 
+  contour_integral (λ (z : ℂ), (z - c)⁻¹ • f z) (rectangle b r t l) - 
+  contour_integral (λ (z : ℂ), (z - c)⁻¹ • f c) (rectangle b r t l):=
+    begin
+      apply contour_integral_sub',
+      {
+        rw left_func,
+        exact part_of_dslope_continuous bc ct lc cr Hc,
+      },
+      {
+        rw right_func,
+        apply part_of_dslope_continuous bc ct lc cr,
+        apply continuous.continuous_on,
+        exact continuous_const,
+        exact _inst_3,
+      },
+      {
+        exact rectangle_continuous_on b r t l,
+      },
+      {
+        exact deriv_rectangle_integrable b r t l,
+      },
+    end,
+  rw int_z at int_sub, 
+  exact zero_exact int_sub,
+  exact _inst_3,
 end
 
 /-! Part VI. (perhaps irrelevant) Define circles. 
