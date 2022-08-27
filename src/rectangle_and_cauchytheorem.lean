@@ -905,6 +905,40 @@ begin
   exact _inst_3,
 end
 
+lemma log_comp_affine_has_deriv {a b:ℂ}{x:ℝ}
+(ha: a ≠ 0)(h: 0 < (a*x+b).re ∨ (a*x+b).im ≠ 0):
+has_deriv_at (λ (t : ℝ), (complex.log (a*t + b))*a⁻¹)
+((a*x+b)⁻¹) x :=
+begin
+  have axbrw: (a*x+b)⁻¹ = (a*(a*x+b)⁻¹)*a⁻¹:=
+    by {rw mul_comm _ (a*x+b)⁻¹, rw mul_assoc,
+        have a':a * a⁻¹=1:= div_self ha,
+        rw a', ring_nf,},
+  rw axbrw,
+  apply has_deriv_at.mul_const _ a⁻¹,
+  let f:ℝ→ ℂ:=λt:ℝ, (a*t+b),
+  have f_rw: (λ (y : ℝ), complex.log (a * y + b))
+  =(λ (t:ℝ), complex.log (f t)) :=
+    by {ext1, simp,},
+  have f'f_rw: (a * (a * ↑x + b)⁻¹) = a/f x:=
+    by {ring_nf,simp,left,rw mul_comm,},
+  rw [f_rw, f'f_rw],
+  apply has_deriv_at.clog_real,
+  simp,
+  have coe_comp: f=(λt:ℂ, a*t+b) ∘ (λ (t : ℝ), (t : ℂ)):=
+    by {ext1, simp,},
+  rw coe_comp,
+  have conc:has_deriv_at ((λ (t : ℂ), a * t + b) ∘ 
+    λ (t : ℝ), ↑t) a x ↔ 
+    has_deriv_at ((λ (t : ℂ), a * t + b) ∘ 
+    λ (t : ℝ), ↑t) (a*1) x := by simp,
+  rw conc,
+  apply has_deriv_at.comp,
+  sorry,
+  exact coe_has_deriv _,
+  exact h,
+end
+
 lemma winding_number_of_rectangle {c: ℂ}
 {b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
