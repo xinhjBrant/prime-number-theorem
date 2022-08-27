@@ -701,6 +701,18 @@ begin
   rw smul_integral_convert,
 end
 
+lemma contour_integral_smul_right(f:ℂ → ℂ)(L:ℝ → ℂ)(c:E):
+contour_integral (λz:ℂ, f(z) • c) L = 
+(contour_integral f L) • c :=
+begin
+  unfold contour_integral,
+  have func_rw: (λ t:ℝ,deriv L t • f (L t) • c) =
+  (λ t:ℝ,(deriv L t • f (L t)) • c) :=
+    by {ext1, rw smul_assoc,},
+  rw func_rw,
+  simp,
+end
+
 lemma contour_integral_add{f:ℂ → E}{g:ℂ → E}{L:ℝ → ℂ}
 (hfL: contour_integrable f L)(hgL: contour_integrable g L):
 contour_integral (f + g) L = 

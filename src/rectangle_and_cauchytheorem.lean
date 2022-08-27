@@ -810,18 +810,49 @@ begin
   exact dslope_differentiable_at bc ct lc cr Hc Hd,
 end
 
+lemma reciprocal_continuous (c: ℂ) :
+continuous_on (λ (z : ℂ), (z - c)⁻¹) {c}ᶜ :=
+begin
+  rw continuous_on,
+  intros x x_in, 
+  simp at x_in,
+  apply continuous_at.continuous_within_at,
+  have func_eq: (λ (z : ℂ), (z - c)⁻¹)
+  =(λ (z:ℂ), z⁻¹) ∘ (λ (z : ℂ), (z - c)) :=
+    by {ext1, simp,},
+  rw func_eq,
+  apply continuous_at.comp,
+  have h: (x-c)≠ 0 := by {symmetry, intro hy, 
+    have h':=zero_exact hy, exact x_in h',},
+  exact normed_field.continuous_at_inv.mpr h,
+  have cm: continuous (λ (z : ℂ), z - c) :=
+    continuous_sub_right c,
+  exact continuous.continuous_at cm,
+end
+
 lemma part_of_dslope_continuous{f : ℂ → E} {c: ℂ}
 {b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r)
 (Hc : continuous_on f (set.interval l r ×ℂ set.interval b t)):
 continuous_on ((λ (z : ℂ), (z - c)⁻¹) • f) 
 (rectangle b r t l '' set.interval 0 1) :=
-begin
-  apply continuous_on.mono _
+begin 
+  have hr: continuous_on (λ (z : ℂ), (z - c)⁻¹) 
+    (rectangle b r t l '' set.interval 0 1) := 
+    continuous_on.mono (reciprocal_continuous c)
+      (image_rectangle_sub_compl_center bc ct lc cr),
+  have ss :(set.interval l r ×ℂ set.interval b t) ∩ {c}ᶜ
+  ⊆ (set.interval l r ×ℂ set.interval b t) := 
+  (set.interval l r ×ℂ set.interval b t).inter_subset_left {c}ᶜ,
+  have hf': continuous_on f 
+    ((set.interval l r ×ℂ set.interval b t) ∩ {c}ᶜ) :=
+    continuous_on.mono Hc ss,
+  have hf: continuous_on f 
+    (rectangle b r t l '' set.interval 0 1) :=
+    continuous_on.mono hf'
     (image_rectangle_sub_closure_inter_compl_center bc ct lc cr),
-  rw continuous_on,
-  intros x x_in,
-  sorry,
+  have rf:= continuous_on.prod_map hr hf,
+  exact continuous_on.smul hr hf,
 end
 
 lemma Cauchy_integral_formula_rectangle_pre{f : ℂ → E} {c: ℂ}
@@ -830,8 +861,9 @@ lemma Cauchy_integral_formula_rectangle_pre{f : ℂ → E} {c: ℂ}
 (Hc : continuous_on f (set.interval l r ×ℂ set.interval b t))
 (Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
 contour_integral (λz:ℂ, (z-c)⁻¹•f(z)) (rectangle b r t l)=
-contour_integral (λz:ℂ, (z-c)⁻¹•f(c)) (rectangle b r t l):=
+contour_integral (λz:ℂ, (z-c)⁻¹) (rectangle b r t l) • f(c):=
 begin
+  rw ← contour_integral_smul_right _ _ (f(c)),
   have func_eq:(λz:ℂ, (z-c)⁻¹•f(z) - (z-c)⁻¹•f(c))=
   (λz:ℂ, (z-c)⁻¹•f(z))-(λz:ℂ, (z-c)⁻¹•f(c)):=
     by {ext1, simp,},
@@ -873,6 +905,26 @@ begin
   exact _inst_3,
 end
 
+lemma winding_number_of_rectangle {c: ℂ}
+{b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+contour_integral (λz:ℂ, (z-c)⁻¹) (rectangle b r t l)
+= 2 * real.pi *complex.I :=
+begin
+  sorry,
+end
+
+theorem Cauchy_integral_formula_rectangle{f : ℂ → E} {c: ℂ}
+{b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t))
+(Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
+contour_integral (λz:ℂ, (z-c)⁻¹•f(z)) (rectangle b r t l)=
+(2 * real.pi *complex.I :ℂ) • f(c) :=
+begin
+  rw Cauchy_integral_formula_rectangle_pre bc ct lc cr Hc Hd,
+  rw winding_number_of_rectangle bc ct lc cr,
+end
 /-! Part VI. (perhaps irrelevant) Define circles. 
 
 - # Circles
