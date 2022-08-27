@@ -5,6 +5,18 @@ import analysis.calculus.deriv
 import measure_theory.integral.interval_integral
 noncomputable theory
 
+section order
+
+variables {α : Type*}[linear_order α]
+
+lemma Ioo_subset_interval {a b :α}:
+set.Ioo a b ⊆ set.interval a b :=
+set.subset.trans set.Ioo_subset_Icc_self set.Icc_subset_interval
+
+end order
+
+section topology
+
 universes u v
 
 variables {α : Type u}{β : Type v}
@@ -14,6 +26,10 @@ variables [topological_space α]
 lemma eventually_nhds_eq_iff {a : α} {f g : α → β} :
   (∀ᶠ x in nhds a, f x = g x) ↔ ∃ (t : set α), (∀ x ∈ t, f x = g x) ∧ is_open t ∧ a ∈ t := 
   mem_nhds_iff.trans $ by simp only [set.subset_def, exists_prop, set.mem_set_of_eq]
+
+end topology
+
+section integral
 
 variables {E : Type} 
 [normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
@@ -42,7 +58,7 @@ begin
     rw hinc at condition,
     exact measure_theory.integrable_on.left_of_union condition,
   },
-  exact _inst_5,
+  exact _inst_4,
 end
 
 lemma interval_integrable_iff_integrable_Ioo_of_le {μ:measure_theory.measure ℝ}
@@ -51,7 +67,7 @@ lemma interval_integrable_iff_integrable_Ioo_of_le {μ:measure_theory.measure �
 begin
   rw interval_integrable_iff_integrable_Icc_of_le hab,
   exact integrable_on_Icc_iff_integrable_on_Ioo,
-  exact _inst_5,
+  exact _inst_4,
 end
 
 lemma integral_congr'''{μ:measure_theory.measure ℝ}{a b : ℝ}
@@ -63,7 +79,7 @@ begin
   repeat {rw measure_theory.set_integral_congr_set_ae
     measure_theory.Ioo_ae_eq_Ioc.symm,},
   exact measure_theory.set_integral_congr measurable_set_Ioo h,
-  exact _inst_5, exact _inst_5,
+  exact _inst_4, exact _inst_4,
 end
 
 lemma integral_congr' {μ:measure_theory.measure ℝ}{a b : ℝ}
@@ -182,3 +198,5 @@ have hf' : measure_theory.ae_strongly_measurable (λ (t : ℝ), f t) (μ.restric
     assumption, },
   exact smul_continuous_on hf' hg,
 end
+
+end integral

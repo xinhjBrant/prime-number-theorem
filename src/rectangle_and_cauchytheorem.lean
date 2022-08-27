@@ -146,6 +146,112 @@ end
 def rectangle (b:ℝ)(r:ℝ)(t:ℝ)(l:ℝ) := 
   path_concatenation (br_join_tl b r t l) 
 
+lemma center_in_interior_rectangle{c:ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+c ∈ (set.Ioo l r ×ℂ set.Ioo b t) :=
+begin
+  unfold set.re_prod_im,
+  simp, split, split,
+  exact lc, exact cr, split,
+  exact bc, exact ct,
+end
+
+lemma center_in_interior_rectangle_iff {c:ℂ}
+{b r t l:ℝ}: c ∈ (set.Ioo l r ×ℂ set.Ioo b t) ↔
+((l < c.re ∧ c.re < r)∧ b < c.im ∧ c.im < t ) :=
+begin
+  split,
+  intros c_in,
+  unfold set.re_prod_im at c_in,
+  simp at c_in, exact c_in,
+  intros in_cond,
+  exact center_in_interior_rectangle (in_cond.2.1) 
+    (in_cond.2.2) (in_cond.1.1) (in_cond.1.2),
+end
+
+lemma point_in_closure_rectangle{c:ℂ}
+{b r t l:ℝ}(bc: b ≤ c.im) (ct: c.im ≤ t)
+(lc: l ≤ c.re) (cr: c.re ≤ r):
+c ∈ (set.interval l r ×ℂ set.interval b t) :=
+begin 
+  have bt:b≤ t:= le_trans bc ct,
+  have lr:l≤ r:= le_trans lc cr,
+  unfold set.re_prod_im,
+  simp, split, split,
+  rw min_eq_left lr, exact lc,
+  rw max_eq_right lr, exact cr,
+  split, rw min_eq_left bt, exact bc,
+  rw max_eq_right bt, exact ct, 
+end
+
+lemma interior_rectangle_open(b r t l:ℝ): 
+is_open (set.Ioo l r ×ℂ set.Ioo b t) :=
+begin
+  apply is_open.re_prod_im,
+  exact is_open_Ioo,
+  exact is_open_Ioo,
+end
+
+lemma interior_rectangle_sub_closure(b r t l:ℝ):
+(set.Ioo l r ×ℂ set.Ioo b t)⊆ 
+(set.interval l r ×ℂ set.interval b t) :=
+begin
+  unfold set.re_prod_im,
+  have lr : set.Ioo l r ⊆ set.interval l r := 
+    Ioo_subset_interval,
+  have bt : set.Ioo b t ⊆ set.interval b t := 
+    Ioo_subset_interval, 
+  intro, simp,
+  intros ll rr bb tt, split,
+  have x_re_in:x.re∈ set.Ioo l r := 
+    by {unfold set.Ioo, simp, split, exact ll, exact rr,},
+  exact lr x_re_in,
+  have x_im_in:x.im∈ set.Ioo b t:=
+    by {unfold set.Ioo, simp, split, exact bb, exact tt,},
+  exact bt x_im_in,
+end
+
+lemma interior_rectangle_neighborhood {c: ℂ}
+{b r t l:ℝ} (hin: c ∈ (set.Ioo l r ×ℂ set.Ioo b t)):
+(set.Ioo l r ×ℂ set.Ioo b t) ∈ (nhds c) :=
+begin
+  rw mem_nhds_iff,
+  use (set.Ioo l r ×ℂ set.Ioo b t),
+  split, exact rfl.subset,
+  split, exact interior_rectangle_open b r t l,
+  exact hin,
+end
+
+lemma interior_rectangle_neighborhood' {c: ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+(set.Ioo l r ×ℂ set.Ioo b t) ∈ (nhds c) :=
+begin
+  exact interior_rectangle_neighborhood 
+    (center_in_interior_rectangle bc ct lc cr),
+end
+
+lemma closure_rectangle_neighborhood {c: ℂ}
+{b r t l:ℝ} (hin: c ∈ (set.Ioo l r ×ℂ set.Ioo b t) ):
+(set.interval l r ×ℂ set.interval b t) ∈ (nhds c) :=
+begin
+  rw mem_nhds_iff,
+  use (set.Ioo l r ×ℂ set.Ioo b t),
+  split, exact interior_rectangle_sub_closure b r t l,
+  split, exact interior_rectangle_open b r t l,
+  exact hin,
+end
+
+lemma closure_rectangle_neighborhood' {c: ℂ}
+{b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
+(lc: l < c.re) (cr: c.re < r):
+(set.interval l r ×ℂ set.interval b t) ∈ (nhds c) :=
+begin
+  exact closure_rectangle_neighborhood 
+    (center_in_interior_rectangle bc ct lc cr),
+end
+
 lemma image_rec_bottom {l:ℝ}(b:ℝ){r:ℝ}(lr:l≤ r):
 set.image (rec_bottom l b r) (set.interval 0 1)
 ⊆  {z:ℂ | l≤ z.re ∧ z.re≤ r ∧ z.im = b} :=
@@ -153,20 +259,114 @@ begin
   unfold rec_bottom, unfold line_segment, 
   simp, unfold set.Icc, simp,
   intros a a_ge a_le, split, 
-  apply mul_nonneg,
-  simp, exact lr, exact a_ge,
-  have temp: (r-l)*a≤ r-l :=
-    by {apply mul_nonneg_le_one_le, 
-    simp, exact lr, exact rfl.ge, 
-    exact a_ge, exact a_le,},
-  have t:=add_le_add_right temp l,
-  simp at t, exact t,
+  {
+    apply mul_nonneg,
+    simp, exact lr, exact a_ge,
+  },
+  {
+    have temp: (r-l)*a≤ r-l :=
+      by {apply mul_nonneg_le_one_le, 
+      simp, exact lr, exact rfl.ge, 
+      exact a_ge, exact a_le,},
+    have temp':=add_le_add_right temp l,
+    simp at temp', exact temp',
+  },
 end
 
-lemma image_rectangle_sub{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r):
+lemma image_rec_right {b:ℝ}(r:ℝ){t:ℝ}(bt:b≤ t):
+set.image (rec_right b r t) (set.interval 0 1)
+⊆  {z:ℂ | b≤ z.im ∧ z.im≤ t ∧ z.re = r} :=
+begin
+  unfold rec_right, unfold line_segment, 
+  simp, unfold set.Icc, simp,
+  intros a a_ge a_le, split, 
+  {
+    apply mul_nonneg,
+    simp, exact bt, exact a_ge,
+  },
+  {
+    have temp: (t-b)*a≤ t-b :=
+      by {apply mul_nonneg_le_one_le, 
+      simp, exact bt, exact rfl.ge, 
+      exact a_ge, exact a_le,},
+    have temp':=add_le_add_right temp b,
+    simp at temp', exact temp',
+  },
+end
+
+lemma image_rec_top {r:ℝ}(t:ℝ){l:ℝ}(lr:l≤ r):
+set.image (rec_top r t l) (set.interval 0 1)
+⊆  {z:ℂ | l≤ z.re ∧ z.re≤ r ∧ z.im = t} :=
+begin
+  unfold rec_top, unfold line_segment, 
+  simp, unfold set.Icc, simp,
+  intros a a_ge a_le, split, 
+  {
+    have temp: (r-l)*a≤ r-l :=
+      by {apply mul_nonneg_le_one_le, 
+      simp, exact lr, exact rfl.ge, 
+      exact a_ge, exact a_le,},
+    have temp_m: -(r-l)≤ -((r-l)*a):=neg_le_neg temp,
+    have temp':=add_le_add_right temp_m r,
+    have rwl : -(r - l) + r = l:= by ring_nf,
+    have rwr : -((r - l) * a) + r = (l - r) * a + r :=by ring_nf,
+    rw [rwl, rwr] at temp', exact temp',
+  },
+  {
+    apply mul_nonpos_of_nonpos_of_nonneg,
+    simp, exact lr, exact a_ge,
+  },
+end
+
+lemma image_rec_left {t:ℝ}(l:ℝ){b:ℝ}(bt:b≤ t):
+set.image (rec_left t l b) (set.interval 0 1)
+⊆  {z:ℂ | b≤ z.im ∧ z.im≤ t ∧ z.re = l} :=
+begin
+  unfold rec_left, unfold line_segment, 
+  simp, unfold set.Icc, simp,
+  intros a a_ge a_le, split, 
+  {
+    have temp: (t-b)*a≤ t-b :=
+      by {apply mul_nonneg_le_one_le, 
+      simp, exact bt, exact rfl.ge, 
+      exact a_ge, exact a_le,},
+    have temp_m: -(t-b)≤ -((t-b)*a):=neg_le_neg temp,
+    have temp':=add_le_add_right temp_m t,
+    have rwl : -(t - b) + t = b:= by ring_nf,
+    have rwr : -((t - b) * a) + t = (b - t) * a + t :=by ring_nf,
+    rw [rwl, rwr] at temp', exact temp',
+  },
+  {
+    apply mul_nonpos_of_nonpos_of_nonneg,
+    simp, exact bt, exact a_ge,
+  },
+end
+
+lemma image_rectangle'{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r):
+set.image (rectangle b r t l) (set.interval 0 1)=
+((set.image (rec_bottom l b r) (set.interval 0 1))∪ 
+(set.image (rec_right b r t) (set.interval 0 1))) ∪ 
+((set.image (rec_top r t l) (set.interval 0 1))∪
+(set.image (rec_left t l b) (set.interval 0 1))):=
+begin
+  unfold rectangle,
+  rw path_concatenation_image (br_join_tl b r t l),
+  rw [rec_bottomright, rec_topleft],
+  rw path_concatenation_image (bottom_join_right b r t l),
+  rw path_concatenation_image (top_join_left b r t l),
+end
+
+lemma image_rectangle_sub_closure{b r t l:ℝ}
+(bt: b≤ t)(lr: l≤ r):
 set.image (rectangle b r t l) (set.interval 0 1)
 ⊆ (set.interval l r ×ℂ set.interval b t) :=
 begin
+  intros x x_in,
+  rw image_rectangle' bt lr at x_in,
+  apply point_in_closure_rectangle,
+  sorry,
+  sorry,
+  sorry,
   sorry,
 end
 
@@ -416,7 +616,7 @@ contour_integral f (rectangle b r t l) = 0 :=
 begin
   have hf: continuous_on f 
        (set.image (rectangle b r t l) (set.interval 0 1)):=
-       continuous_on.mono Hc (image_rectangle_sub bt lr),
+       continuous_on.mono Hc (image_rectangle_sub_closure bt lr),
   rw integral_along_rectangle hf,
   let s:set ℂ:={c},
   have hs:s.countable:=set.to_countable s,
@@ -445,6 +645,7 @@ end
 
 - # Cauchy Integral Formula on Rectangles
 -/
+
 lemma dslope_eq_on{f : ℂ → E}{c: ℂ}
 {b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
@@ -461,14 +662,12 @@ lemma dslope_continuous_on {f : ℂ → E}{c: ℂ}
 (Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
 continuous_on (dslope f c) (set.interval l r ×ℂ set.interval b t):=
 begin
-  have c_in_Ioo_prod: c∈ (set.Ioo l r ×ℂ set.Ioo b t):=
-    by sorry,
-  have hs:(set.interval l r ×ℂ set.interval b t)∈ nhds c:=
-    by sorry,
-  rw continuous_on_dslope hs,
+  rw continuous_on_dslope 
+    (closure_rectangle_neighborhood' bc ct lc cr),
   split,
   exact Hc,
-  sorry,
+  exact differentiable_on.differentiable_at Hd 
+    (interior_rectangle_neighborhood' bc ct lc cr),
 end
 
 lemma dslope_differentiable_at {f : ℂ → E}{c: ℂ}
@@ -480,9 +679,11 @@ lemma dslope_differentiable_at {f : ℂ → E}{c: ℂ}
 differentiable_at ℂ (dslope f c) x :=
 begin
   intros x x_in,
-  have x_ne_c: x ≠ c:= by sorry,
-  rw differentiable_at_dslope_of_ne x_ne_c,
-  sorry,
+  simp at x_in,
+  rw differentiable_at_dslope_of_ne x_in.2,
+  have hd:=Hd x x_in.1,
+  exact differentiable_within_at.differentiable_at hd
+    (interior_rectangle_neighborhood x_in.1),
 end
 
 lemma dslope_zero_integral {f : ℂ → E} {c: ℂ}
@@ -492,8 +693,10 @@ lemma dslope_zero_integral {f : ℂ → E} {c: ℂ}
 (Hd : differentiable_on ℂ f (set.Ioo l r ×ℂ set.Ioo b t)):
 contour_integral (dslope f c) (rectangle b r t l) = 0 :=
 begin
-  have bt: b≤ t:= by sorry,
-  have lr: l≤ r:= by sorry,
+  have b_lt_t : b<t := lt_trans bc ct,
+  have l_lt_r : l<r := lt_trans lc cr,
+  have bt: b≤ t:= le_of_lt b_lt_t,
+  have lr: l≤ r:= le_of_lt l_lt_r,
   apply Cauchy_Goursat_rectangle c bt lr,
   exact dslope_continuous_on bc ct lc cr Hc Hd,
   exact dslope_differentiable_at bc ct lc cr Hc Hd,
