@@ -3,8 +3,10 @@ import analysis.calculus.dslope
 import analysis.complex.cauchy_integral
 noncomputable theory
 
-variables {E : Type} 
-[normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
+section tactic 
+
+variables {E : Type} {𝕜: Type} [nontrivially_normed_field 𝕜]
+[normed_add_comm_group E] [normed_space 𝕜 E] [complete_space E] 
 
 /-! Part O. tactic
 
@@ -21,6 +23,21 @@ begin
   rw h at b_z,
   rw b_z, simp,
 end
+
+lemma zero_sym_exact{a b:E}(h:a-b=0):a=b:=
+begin
+  have h':0=a-b:=by rw h,
+  exact zero_exact h',
+end
+
+lemma neg_rewrite {a b:E}: -a=b ↔ a=-b := 
+by {split, intro f, rw← f,simp,
+    intro f, rw f,simp,}
+
+end tactic 
+
+variables {E : Type} 
+[normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
 /-! Part O'. basic function 
 
@@ -1048,6 +1065,16 @@ begin
   exact h,
 end
 
+/-lemma split_real_imaginary_part(a b:ℝ)(c:ℂ):
+(a:ℂ)+b*complex.I-c=(a-c.re)+(b-c.im)*complex.I:=
+begin
+  ring_nf, simp,
+  have md: complex.I * ↑b - c 
+    = complex.I * ↑b - ((c.re:ℂ)+(c.im)*complex.I):=
+    by simp, 
+  rw md, ring_nf,
+end-/
+
 lemma integral_of_fraction{a b:ℂ}{lef ref:ℝ}
 (ha: a ≠ 0)(hlr: lef ≤ ref)
 (h: ∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
@@ -1074,6 +1101,106 @@ begin
   simp at h'', exact h'',
 end
 
+lemma integral_of_fraction_one{b:ℂ}{lef ref:ℝ}
+(hlr: lef < ref)
+(h: ∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
+0 < ((x:ℂ)+b).re ∨ ((x:ℂ)+b).im ≠ 0):
+∫ (t: ℝ) in lef..ref, (((t:ℂ)+b)⁻¹) =
+(complex.log (ref + b)-complex.log(lef+b)) :=
+begin
+  have one_ne_zero:(1:ℂ)≠ 0:=by simp,
+  have hlr':lef≤ ref:= le_of_lt hlr,
+  have h':∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
+    0 < ((1:ℂ)*x+b).re ∨ ((1:ℂ)*x+b).im ≠ 0 :=
+    by {ring_nf,exact h,},
+  have lhs:∫ (t: ℝ) in lef..ref, (((t:ℂ)+b)⁻¹) =
+  ∫ (t: ℝ) in lef..ref, (((1:ℂ)*t+b)⁻¹):= by simp,
+  rw lhs, 
+  rw integral_of_fraction one_ne_zero hlr' h',
+  simp,
+end
+
+lemma integral_of_fraction_I{b:ℂ}{lef ref:ℝ}
+(hlr: lef < ref)
+(h: ∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
+0 < (x*complex.I+b:ℂ).re ∨ (x*complex.I+b:ℂ).im ≠ 0):
+complex.I • ∫ (t: ℝ) in lef..ref, ((t*complex.I+b:ℂ)⁻¹) =
+(complex.log (ref*complex.I + b)) -
+(complex.log (lef*complex.I + b)) :=
+begin
+  have i_ne_zero:complex.I≠ 0:=complex.I_ne_zero,
+  have hlr':lef≤ ref:= le_of_lt hlr,
+  have h':∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
+    0 < (complex.I*x+b).re ∨ (complex.I*x+b).im ≠ 0 :=
+    by {ring_nf,exact h,},
+  have lhs:(λt:ℝ,(t*complex.I+b:ℂ)⁻¹) =
+    (λt:ℝ ,(complex.I*t+b)⁻¹):= 
+    by {ext1,simp,rw mul_comm},
+  rw lhs, 
+  rw integral_of_fraction i_ne_zero hlr' h',
+  simp, rw ← mul_assoc, simp,
+  rw mul_comm, rw mul_comm ↑lef complex.I,
+end
+
+lemma integral_of_reciprocal_on_bottom {c: ℂ}
+{l b r:ℝ} (bc: b < c.im) (lc: l < c.re) (cr: c.re < r):
+contour_integral (λz:ℂ, (z-c)⁻¹) (rec_bottom l b r) = 
+complex.log (r+b*complex.I-c) -
+complex.log (l+b*complex.I-c) :=
+begin
+  have lr:l< r:= lt_trans lc cr,
+  rw integral_along_rectangle_bottom,
+  have lhs: (λx:ℝ,(↑x + ↑b * complex.I - c)⁻¹)=
+  (λx:ℝ,(↑x + (↑b * complex.I - c))⁻¹) := 
+    by {ext1, rw← add_sub,}, rw lhs,
+  repeat {rw ← add_sub},
+  apply integral_of_fraction_one lr, 
+  intros x x_in, rw add_sub,
+  simp, right, intro f,
+  exact (ne_of_lt bc) (zero_sym_exact f),
+end
+
+lemma integral_of_reciprocal_on_top {c: ℂ}
+{r t l:ℝ} (ct: c.im < t) (lc: l < c.re) (cr: c.re < r):
+contour_integral (λz:ℂ, (z-c)⁻¹) (rec_top r t l) = 
+complex.log (l+t*complex.I-c) -
+complex.log (r+t*complex.I-c) :=
+begin
+  have lr:l< r:= lt_trans lc cr,
+  rw integral_along_rectangle_top,
+  rw neg_rewrite, simp,
+  have lhs: (λx:ℝ,(↑x + ↑t * complex.I - c)⁻¹)=
+  (λx:ℝ,(↑x + (↑t * complex.I - c))⁻¹) := 
+    by {ext1, rw← add_sub,}, rw lhs,
+  repeat {rw ← add_sub},
+  apply integral_of_fraction_one lr, 
+  intros x x_in, rw add_sub,
+  simp, right, intro f,
+  have f':= zero_sym_exact f,
+  rw f' at ct, simp at ct, exact ct,
+end
+
+lemma integral_of_reciprocal_on_right {c: ℂ}
+{b r t:ℝ} (bc: b < c.im) (ct: c.im < t) (cr: c.re < r) :
+contour_integral (λz:ℂ, (z-c)⁻¹) (rec_right b r t) = 
+complex.log (r+t*complex.I-c) -
+complex.log (r+b*complex.I-c) :=
+begin
+  have bt : b< t:= lt_trans bc ct,
+  rw integral_along_rectangle_right,
+  have lhs: (λx:ℝ,(↑r + ↑x * complex.I - c)⁻¹)=
+  (λx:ℝ,( ↑x * complex.I +(↑r- c))⁻¹) := 
+    by {ext1, ring_nf,}, rw lhs,
+  have rtc: ↑r + ↑t * complex.I - c =
+    ↑t * complex.I+ (↑r-c):= by ring_nf,
+  have rbc: ↑r + ↑b * complex.I - c =
+    ↑b * complex.I + (↑r - c) := by ring_nf,
+  rw [rtc, rbc],
+  apply integral_of_fraction_I bt,
+  intros x x_in, simp,
+  left, exact cr,
+end
+
 lemma winding_number_of_rectangle {c: ℂ}
 {b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
@@ -1094,6 +1221,7 @@ begin
   rw Cauchy_integral_formula_rectangle_pre bc ct lc cr Hc Hd,
   rw winding_number_of_rectangle bc ct lc cr,
 end
+
 /-! Part VI. (perhaps irrelevant) Define circles. 
 
 - # Circles
