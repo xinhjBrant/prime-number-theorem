@@ -489,8 +489,25 @@ begin
   },
 end
 
-lemma deriv_eq_on{f:ℝ→ ℂ}{g:ℝ→ ℂ}{a b:ℝ}(hab:a≤ b)
-(hde: set.eq_on f g (set.interval a b)):
+lemma has_eq_deriv_on_Ioo{f:ℝ→ ℂ}{g:ℝ→ ℂ}{a b x:ℝ}{d:ℂ}
+(hab:a≤ b)(hde: set.eq_on f g (set.Ioo a b))
+(hx: x ∈ set.Ioo a b)(hfx: has_deriv_at f d x):
+has_deriv_at g d x:=
+begin
+  apply has_deriv_at.congr_of_eventually_eq hfx,
+  symmetry,
+  unfold filter.eventually_eq,
+  apply iff.elim_right eventually_nhds_eq_iff,
+  existsi (set.Ioo a b),
+  apply and.intro,
+  exact hde,
+  split,
+  exact is_open_Ioo,
+  exact hx,
+end
+
+lemma deriv_eq_on_Ioo{f:ℝ→ ℂ}{g:ℝ→ ℂ}{a b:ℝ}(hab:a≤ b)
+(hde: set.eq_on f g (set.Ioo a b)):
 set.eq_on (deriv f) (deriv g) (set.Ioo a b):=
 begin
   rw set.eq_on,
@@ -500,14 +517,17 @@ begin
   apply iff.elim_right eventually_nhds_eq_iff,
   existsi (set.Ioo a b),
   apply and.intro,
-  have inc:set.Ioo a b ⊆ set.interval a b:= 
-    by {rw set.interval, rw min_eq_left hab,
-        rw max_eq_right hab, exact set.Ioo_subset_Icc_self,},
-  exact set.eq_on.mono inc hde,
+  exact hde,
   split,
   exact is_open_Ioo,
   exact hx,
 end
+
+lemma deriv_eq_on{f:ℝ→ ℂ}{g:ℝ→ ℂ}{a b:ℝ}(hab:a≤ b)
+(hde: set.eq_on f g (set.interval a b)):
+set.eq_on (deriv f) (deriv g) (set.Ioo a b):=
+deriv_eq_on_Ioo hab 
+(set.eq_on.mono Ioo_subset_interval hde)
 
 @[protected] lemma deriv_L1_eq_on{L1:ℝ→ ℂ}{L2:ℝ → ℂ}(hw: L1 1=L2 0):
 set.eq_on (deriv (λ t:ℝ, L1 (2*t))) 

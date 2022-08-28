@@ -1188,46 +1188,172 @@ begin
   left, exact cr,
 end
 
+@[protected] lemma integrable_lxc_inv_bt{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+interval_integrable (λ (x : ℝ), 
+(complex.I * ↑x  + (↑l - c))⁻¹)
+measure_theory.measure_space.volume b t :=
+begin
+  apply continuous_on.interval_integrable,
+  apply affine_rtc_continuous_on,
+  intros x x_in, intro fp, 
+  have rp:(complex.I * ↑x + (↑l - c)).re=l-c.re:=
+    by simp,
+  rw fp at rp, simp at rp,
+  exact (ne_of_lt cl) (zero_exact rp),
+end
+
+@[protected] lemma integrable_lxc_inv_bcim{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+interval_integrable (λ (x : ℝ), 
+(complex.I * ↑x  + (↑l - c))⁻¹) 
+measure_theory.measure_space.volume b c.im :=
+begin
+  have bt: b< t:= (lt_trans bc ct),
+  apply interval_integrable.mono_set 
+    (integrable_lxc_inv_bt bc ct cl),
+  unfold set.interval, 
+  rw [min_eq_left_of_lt bc, min_eq_left_of_lt bt,
+    max_eq_right_of_lt bc, max_eq_right_of_lt bt],
+  exact set.Icc_subset_Icc_right (le_of_lt ct),
+end
+
+@[protected] lemma integrable_lxc_inv_cimt{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+interval_integrable (λ (x : ℝ), 
+(complex.I * ↑x  + (↑l - c))⁻¹) 
+measure_theory.measure_space.volume c.im t :=
+begin
+  have bt: b< t:= (lt_trans bc ct),
+  apply interval_integrable.mono_set 
+    (integrable_lxc_inv_bt bc ct cl),
+  unfold set.interval, 
+  rw [min_eq_left_of_lt ct, min_eq_left_of_lt bt,
+    max_eq_right_of_lt ct, max_eq_right_of_lt bt],
+  exact set.Icc_subset_Icc_left (le_of_lt bc),
+end
+
 @[protected] lemma integral_left_two_pieces{c:ℂ}{t l b:ℝ}
 (bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
 contour_integral (λz:ℂ, (z-c)⁻¹) (rec_left t l b) 
 = -(complex.I • ∫ (x: ℝ) in (c.im)..t, (l+x*complex.I-c)⁻¹)
 - (complex.I • ∫ (x: ℝ) in b..(c.im), (l+x*complex.I-c)⁻¹):=
 begin
-  have bt: b< t:= (lt_trans bc ct),
   rw integral_along_rectangle_left,
   have lhs:-complex.I • ∫ (x : ℝ) in b..t, 
   (↑l + ↑x * complex.I - c)⁻¹=-(complex.I • 
   ∫ (x : ℝ) in b..t, (↑l + ↑x * complex.I - c)⁻¹):=
     by {simp,}, rw lhs,
+  have fr: (λ (x : ℝ), (↑l + ↑x * complex.I - c)⁻¹)
+  =(λ (x : ℝ), (complex.I * ↑x  + (↑l - c))⁻¹) :=
+    by {ext1,simp,ring_nf,}, rw fr,
   rw neg_rewrite, simp, symmetry,
   rw ← mul_add, simp, left,
-  have tp:interval_integrable (λ (x : ℝ), 
-    (↑l + ↑x * complex.I - c)⁻¹) 
-    measure_theory.measure_space.volume b t :=
-    begin
-      apply continuous_on.interval_integrable,
-      have fr: (λ (x : ℝ), (↑l + ↑x * complex.I - c)⁻¹)
-      =(λ (x : ℝ), (complex.I * ↑x  + (↑l - c))⁻¹) :=
-        by {ext1,simp,ring_nf,}, rw fr,
-      apply affine_rtc_continuous_on,
-      intros x x_in, intro fp, 
-      have rp:(complex.I * ↑x + (↑l - c)).re=l-c.re:=
-        by simp,
-      rw fp at rp, simp at rp,
-      exact (ne_of_lt cl) (zero_exact rp),
-    end,
-  apply interval_integral.integral_add_adjacent_intervals,
-  apply interval_integrable.mono_set tp,
-  unfold set.interval, 
-  rw [min_eq_left_of_lt bc, min_eq_left_of_lt bt,
-    max_eq_right_of_lt bc, max_eq_right_of_lt bt],
-  exact set.Icc_subset_Icc_right (le_of_lt ct),
-  apply interval_integrable.mono_set tp,
-  unfold set.interval, 
-  rw [min_eq_left_of_lt ct, min_eq_left_of_lt bt,
-    max_eq_right_of_lt ct, max_eq_right_of_lt bt],
-  exact set.Icc_subset_Icc_left (le_of_lt bc),
+  exact interval_integral.integral_add_adjacent_intervals 
+    (integrable_lxc_inv_bcim bc ct cl)
+    (integrable_lxc_inv_cimt bc ct cl),
+end
+
+lemma integral_on_lower_left{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
+∫ (x: ℝ) in b..(c.im), (l+x*complex.I-c:ℂ)⁻¹=
+(complex.I)⁻¹ *(real.log(c.re-l)-real.pi*complex.I-
+complex.log (l+b*complex.I-c)) :=
+begin
+  rw mul_sub,
+  have lhs:(λx:ℝ,(↑l + ↑x * complex.I - c)⁻¹)=
+  (λx:ℝ,( complex.I * ↑x + (l - c))⁻¹) := 
+    by {ext1, simp, ring_nf,}, rw lhs,
+  have rhs: ↑l + ↑b * complex.I - c = 
+    complex.I * ↑b + (↑l - c) := by ring_nf, rw rhs,
+  let F:ℝ → ℂ:=λ (x : ℝ), 
+    ite (x=c.im) (complex.I⁻¹ * 
+    (↑(real.log (c.re - l)) - ↑real.pi * complex.I))
+    (complex.I⁻¹*complex.log (complex.I*x + (l-c))),
+  have Fx:∀x:ℝ, F x=ite (x=c.im) (complex.I⁻¹ * 
+    (↑(real.log (c.re - l)) - ↑real.pi * complex.I))
+    (complex.I⁻¹*complex.log (complex.I*x + (l-c))):=
+    by {intro x,exact rfl,},
+  have Fcim: F c.im = (complex.I⁻¹ * 
+    (↑(real.log (c.re - l)) - ↑real.pi * complex.I)):=
+    by {rw Fx c.im, simp,}, rw ← Fcim,
+  have Fb: F b = complex.I⁻¹ * 
+    complex.log (complex.I * ↑b + (↑l - c)) :=
+    by {rw Fx b, rw if_neg (ne_of_lt bc),}, rw ← Fb,
+  have F_eq_on_Ico: set.eq_on 
+    (λx:ℝ, complex.I⁻¹*complex.log (complex.I*x + (l-c))) 
+    F (set.Ico b c.im):=
+    by {intros x x_in, simp at x_in,
+      have mh:=ne_of_lt x_in.2, rw Fx x,
+      rw if_neg mh,},
+  have F_eq_on_Ioo:=set.eq_on.mono 
+    set.Ioo_subset_Ico_self F_eq_on_Ico,
+  apply interval_integral.integral_eq_sub_of_has_deriv_at_of_le 
+    (le_of_lt bc),
+  {
+    intros x x_in,
+    by_cases x=c.im,
+    {
+      rw← continuous_within_at_diff_self ,
+      have iccico:(set.Icc b c.im \ {x})=set.Ico b c.im:=
+        by sorry,
+      rw iccico,
+      unfold continuous_within_at,
+      apply tendsto_nhds_within_congr F_eq_on_Ico,
+      rw h, rw Fcim, 
+      have indu: (λ (x : ℝ), (λ (x : ℝ), complex.I⁻¹ * 
+      complex.log (complex.I * ↑x + (↑l - c))) x) =
+      (λ (x : ℝ), complex.I⁻¹ * 
+      complex.log (complex.I * ↑x + (↑l - c))):= by simp,
+      rw indu,
+      apply filter.tendsto.const_mul complex.I⁻¹,
+      have ftr:(λ (k : ℝ), complex.log (complex.I * ↑k + 
+      (↑l - c)))= complex.log ∘ (λk:ℝ, (complex.I * ↑k + 
+      (↑l - c))):= by simp, rw ftr,
+      apply filter.tendsto.comp,
+      have crel:c.re - l = complex.abs(l-c.re):= by sorry,
+      rw crel,
+      apply complex.tendsto_log_nhds_within_im_neg_of_re_neg_of_im_zero,
+      simp, exact lc, 
+      simp,
+      apply tendsto_nhds_within_of_tendsto_nhds_of_eventually_within
+        (λ (k : ℝ), complex.I * ↑k + (↑l - c)),
+      have lcre:↑l - ↑(c.re)=complex.I*c.im+(l-c:ℂ):=
+        by sorry,
+      rw lcre,
+      apply filter.tendsto.add_const (l-c:ℂ),
+      apply filter.tendsto.const_mul complex.I,
+      have hs:=coe_differentiable.continuous.continuous_within_at.tendsto,
+      simp at hs, simp, exact hs,
+      sorry,
+    },
+    {
+      -- the following proof in this block is probably wrong
+      have iccico:set.Icc b c.im = (set.Ico b c.im) ∪ 
+        {c.im} := by sorry,
+      rw iccico,
+      apply continuous_within_at.union,
+      have x_in':x∈ set.Ico b c.im:= by sorry,
+      apply continuous_on.continuous_within_at _ x_in',
+      apply continuous_on.congr _ 
+        (set.eq_on.symm F_eq_on_Ico),
+      apply log_comp_affine_continuous_on complex.I_ne_zero,
+      intros xx xx_in, simp, right, intro xf,
+      simp at xx_in,
+      exact (ne_of_lt xx_in.2) (zero_sym_exact xf),
+      sorry,
+    },
+  },
+  {
+    intros x x_in,
+    apply has_eq_deriv_on_Ioo (le_of_lt bc) F_eq_on_Ioo x_in,
+    apply log_comp_affine_has_deriv complex.I_ne_zero,
+    simp, right, intro ff, simp at x_in,
+    exact (ne_of_lt x_in.2) (zero_sym_exact ff),
+  },
+  {
+    exact (integrable_lxc_inv_bcim bc ct lc),
+  },
 end
 
 lemma winding_number_of_rectangle {c: ℂ}
