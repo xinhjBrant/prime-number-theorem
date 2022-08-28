@@ -35,16 +35,16 @@ begin
   simp,
 end
 
-lemma deriv_of_coe: deriv (λ (x : ℝ), (x : ℂ)) = 1 :=
- deriv_eq coe_has_deriv
-
 lemma coe_differentiable: 
 differentiable ℝ (λ (t : ℝ), (t : ℂ)):=
 begin
-  unfold differentiable, intro x,
-  apply differentiable_at_of_deriv_ne_zero,
-  rw deriv_of_coe, simp,
+  intro x,
+  exact has_deriv_at.differentiable_at 
+    (coe_has_deriv x),
 end
+
+lemma deriv_of_coe: deriv (λ (x : ℝ), (x : ℂ)) = 1 :=
+ deriv_eq coe_has_deriv
 
 lemma complex_affine_has_deriv (a b x:ℂ):
 has_deriv_at (λ (z : ℂ), a * z + b) a x :=
@@ -55,43 +55,94 @@ begin
   exact has_deriv_at_mul_const a,
 end
 
-lemma affine_rtc_continuous (a b:ℂ):
-continuous ((λ x:ℝ, a*x+b):ℝ→ ℂ):=
+lemma complex_affine_differentiable(a b:ℂ):
+differentiable ℂ (λ (z : ℂ), a * z + b):=
+begin
+  intro x,
+  exact has_deriv_at.differentiable_at 
+    (complex_affine_has_deriv a b x),
+end
+
+lemma affine_rtc_has_deriv(a b :ℂ)(x:ℝ):
+has_deriv_at ((λ x:ℝ, a*x+b):ℝ→ ℂ) a x:=
 begin
   have func_eq:((λ x:ℝ, a*x+b):ℝ→ ℂ)= 
     ((λ z:ℂ, a*z+b):ℂ→ ℂ) ∘ (λ (t : ℝ), (t : ℂ)) :=
     by {ext1, simp,},
-  rw func_eq,
-  apply continuous.comp,
-  have rhs:(λ (z : ℂ), a * z + b)=
-    (λ (z:ℂ),z+b)∘ (λ(z:ℂ), a*z) :=
-    by {ext1, simp,},
-  rw rhs,
-  apply continuous.comp,
-  exact continuous_add_right b,
-  exact continuous_mul_left a,
-  exact differentiable.continuous coe_differentiable,
+  have conc: has_deriv_at ((λ (z : ℂ), a * z + b) 
+    ∘ λ (t : ℝ), ↑t) a x ↔ has_deriv_at ((λ (z : ℂ), 
+    a * z + b) ∘ λ (t : ℝ), ↑t) (a*1) x:= by simp,
+  rw [func_eq, conc],
+  apply has_deriv_at.comp,
+  exact complex_affine_has_deriv a b _,
+  exact coe_has_deriv _,
 end
 
-lemma reciprocal_continuous_on (c: ℂ) :
-continuous_on (λ (z : ℂ), (z - c)⁻¹) {c}ᶜ :=
+lemma affine_rtc_differentiable(a b:ℂ):
+differentiable ℝ ((λ x:ℝ, a*x+b):ℝ→ ℂ):=
 begin
-  rw continuous_on,
-  intros x x_in, 
-  simp at x_in,
-  apply continuous_at.continuous_within_at,
-  have func_eq: (λ (z : ℂ), (z - c)⁻¹)
-  =(λ (z:ℂ), z⁻¹) ∘ (λ (z : ℂ), (z - c)) :=
-    by {ext1, simp,},
-  rw func_eq,
-  apply continuous_at.comp,
-  have h: (x-c)≠ 0 := by {symmetry, intro hy, 
-    have h':=zero_exact hy, exact x_in h',},
-  exact normed_field.continuous_at_inv.mpr h,
-  have cm: continuous (λ (z : ℂ), z - c) :=
-    continuous_sub_right c,
-  exact continuous.continuous_at cm,
+  intro x,
+  exact has_deriv_at.differentiable_at 
+    (affine_rtc_has_deriv a b x),
 end
+
+lemma affine_rtc_continuous (a b:ℂ):
+continuous ((λ x:ℝ, a*x+b):ℝ→ ℂ):=
+differentiable.continuous (affine_rtc_differentiable a b)
+
+lemma complex_affine_inverse_has_deriv{a b x:ℂ}
+(h: a*x+b≠ 0):
+has_deriv_at ((λ(t:ℂ), (a*t + b)⁻¹):ℂ→ ℂ) 
+(-a/(a*x+b)^2) x :=
+has_deriv_at.inv (complex_affine_has_deriv a b x) h
+
+lemma affine_rtc_inverse_has_deriv{a b :ℂ}{x:ℝ}
+(h: a*x+b≠ 0):
+has_deriv_at ((λ(t:ℝ), (a*t + b)⁻¹):ℝ→ ℂ) 
+(-a/(a*x+b)^2) x :=
+begin
+  have func_rw:((λ(t:ℝ), (a*t + b)⁻¹):ℝ→ ℂ)=
+    ((λ(t:ℂ), (a*t + b)⁻¹):ℂ→ ℂ) ∘ (λ (t : ℝ), (t : ℂ)):=
+    by {ext1, simp,},
+  have q:(-a/(a*x+b)^2) =(-a/(a*x+b)^2)*1:= by ring_nf,
+  rw [func_rw,q],
+  apply has_deriv_at.comp,
+  exact complex_affine_inverse_has_deriv h,
+  exact coe_has_deriv _,
+end
+
+lemma affine_rtc_differentiable_on{a b :ℂ}{s: set ℝ}
+(h: ∀(x:ℝ), x∈ s → a*x+b≠ 0):
+differentiable_on ℝ ((λ(t:ℝ), (a*t + b)⁻¹):ℝ→ ℂ) s :=
+begin
+  intros x x_in,
+  apply differentiable_at.differentiable_within_at,
+  have x_in':= h x x_in,
+  exact has_deriv_at.differentiable_at 
+    (affine_rtc_inverse_has_deriv x_in'),
+end
+
+lemma affine_rtc_continuous_on{a b :ℂ}{s: set ℝ}
+(h: ∀(x:ℝ), x∈ s → a*x+b≠ 0):
+continuous_on ((λ(t:ℝ), (a*t + b)⁻¹):ℝ→ ℂ) s :=
+differentiable_on.continuous_on 
+  (affine_rtc_differentiable_on h)
+
+lemma reciprocal_differentiable_on (c:ℂ):
+differentiable_on ℂ (λ (z : ℂ), (z - c)⁻¹) {c}ᶜ :=
+begin
+  apply differentiable_on.inv,
+  apply differentiable.differentiable_on,
+  simp,
+  intros x x_in, simp at x_in, symmetry,
+  intro f, have h:=zero_exact f,
+  exact x_in h,
+end
+
+lemma reciprocal_continuous_on (c:ℂ) :
+continuous_on (λ (z : ℂ), (z - c)⁻¹) {c}ᶜ :=
+differentiable_on.continuous_on 
+  (reciprocal_differentiable_on c)
 
 /-! Part I. Define line segments 
 
@@ -1012,7 +1063,15 @@ begin
   have h':= h x x_in',
   exact log_comp_affine_has_deriv ha h',
   apply continuous_on.interval_integrable,
-  sorry,
+  apply affine_rtc_continuous_on,
+  intros x x_in, 
+  unfold set.interval at x_in,
+  have lef_rw:(min lef ref)=lef:= min_eq_left hlr,
+  have ref_rw:(max lef ref)=ref:= max_eq_right hlr,
+  rw [lef_rw, ref_rw] at x_in,
+  have h'':=h x x_in, intro f,
+  rw f at h'', 
+  simp at h'', exact h'',
 end
 
 lemma winding_number_of_rectangle {c: ℂ}
