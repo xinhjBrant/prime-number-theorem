@@ -6,14 +6,26 @@ noncomputable theory
 variables {E : Type} 
 [normed_add_comm_group E] [normed_space ℂ E] [complete_space E] 
 
-/-! Part I. Define line segments 
+/-! Part O. tactic
 
-- # Line Segments
+- # Tactic
 -/
 
-def line_segment (a:ℂ) (b:ℂ) : ℝ → ℂ :=
-  λ (θ : ℝ) , (b-a) * θ + a
+@[simp] lemma addminus{a:E}{b:E}: a+(-b)=a - b:= 
+by {have t: -b=0-b:= by simp, rw t,
+    rw ← add_sub_assoc, simp,}
 
+lemma zero_exact{a b:E}(h:0=a-b):a=b:=
+begin
+  have b_z: b=b+0:= by simp,
+  rw h at b_z,
+  rw b_z, simp,
+end
+
+/-! Part O'. basic function 
+
+- # Basic Function
+-/
 /-- The derivative of the inclusion ℝ → ℂ is 1. --/
 lemma coe_has_deriv (x:ℝ ):
 has_deriv_at (λ (t : ℝ), (t : ℂ)) 1 x :=
@@ -24,9 +36,70 @@ begin
 end
 
 lemma deriv_of_coe: deriv (λ (x : ℝ), (x : ℂ)) = 1 :=
+ deriv_eq coe_has_deriv
+
+lemma coe_differentiable: 
+differentiable ℝ (λ (t : ℝ), (t : ℂ)):=
 begin
-  exact deriv_eq coe_has_deriv,
+  unfold differentiable, intro x,
+  apply differentiable_at_of_deriv_ne_zero,
+  rw deriv_of_coe, simp,
 end
+
+lemma complex_affine_has_deriv (a b x:ℂ):
+has_deriv_at (λ (z : ℂ), a * z + b) a x :=
+begin
+  apply has_deriv_at.add_const _ b,
+  have frw:(λ (x : ℂ), a * x)=(λ (x : ℂ), x * a):=
+    by {ext1,rw mul_comm,}, rw frw,
+  exact has_deriv_at_mul_const a,
+end
+
+lemma affine_rtc_continuous (a b:ℂ):
+continuous ((λ x:ℝ, a*x+b):ℝ→ ℂ):=
+begin
+  have func_eq:((λ x:ℝ, a*x+b):ℝ→ ℂ)= 
+    ((λ z:ℂ, a*z+b):ℂ→ ℂ) ∘ (λ (t : ℝ), (t : ℂ)) :=
+    by {ext1, simp,},
+  rw func_eq,
+  apply continuous.comp,
+  have rhs:(λ (z : ℂ), a * z + b)=
+    (λ (z:ℂ),z+b)∘ (λ(z:ℂ), a*z) :=
+    by {ext1, simp,},
+  rw rhs,
+  apply continuous.comp,
+  exact continuous_add_right b,
+  exact continuous_mul_left a,
+  exact differentiable.continuous coe_differentiable,
+end
+
+lemma reciprocal_continuous_on (c: ℂ) :
+continuous_on (λ (z : ℂ), (z - c)⁻¹) {c}ᶜ :=
+begin
+  rw continuous_on,
+  intros x x_in, 
+  simp at x_in,
+  apply continuous_at.continuous_within_at,
+  have func_eq: (λ (z : ℂ), (z - c)⁻¹)
+  =(λ (z:ℂ), z⁻¹) ∘ (λ (z : ℂ), (z - c)) :=
+    by {ext1, simp,},
+  rw func_eq,
+  apply continuous_at.comp,
+  have h: (x-c)≠ 0 := by {symmetry, intro hy, 
+    have h':=zero_exact hy, exact x_in h',},
+  exact normed_field.continuous_at_inv.mpr h,
+  have cm: continuous (λ (z : ℂ), z - c) :=
+    continuous_sub_right c,
+  exact continuous.continuous_at cm,
+end
+
+/-! Part I. Define line segments 
+
+- # Line Segments
+-/
+
+def line_segment (a:ℂ) (b:ℂ) : ℝ → ℂ :=
+  λ (θ : ℝ) , (b-a) * θ + a
 
 /-- The line sgement and circle are both continuously differentiable. --/
 lemma deriv_of_line (a:ℂ)(b:ℂ): 
@@ -675,10 +748,6 @@ begin
   rw ← add_assoc (contour_integral f (rec_bottom l b r)) _ _,
 end
 
-@[simp] lemma addminus{a:E}{b:E}: a+(-b)=a - b:= 
-by {have t: -b=0-b:= by simp, rw t,
-    rw ← add_sub_assoc, simp,}
-
 theorem integral_along_rectangle
 {f:ℂ → E}{b r t l: ℝ}
 (hf: continuous_on f 
@@ -740,13 +809,6 @@ end
 
 - # Cauchy Integral Formula on Rectangles
 -/
-
-lemma zero_exact{a b:E}(h:0=a-b):a=b:=
-begin
-  have b_z: b=b+0:= by simp,
-  rw h at b_z,
-  rw b_z, simp,
-end
 
 lemma dslope_eq_on{f : ℂ → E}{c: ℂ}
 {b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
@@ -810,27 +872,7 @@ begin
   exact dslope_differentiable_at bc ct lc cr Hc Hd,
 end
 
-lemma reciprocal_continuous (c: ℂ) :
-continuous_on (λ (z : ℂ), (z - c)⁻¹) {c}ᶜ :=
-begin
-  rw continuous_on,
-  intros x x_in, 
-  simp at x_in,
-  apply continuous_at.continuous_within_at,
-  have func_eq: (λ (z : ℂ), (z - c)⁻¹)
-  =(λ (z:ℂ), z⁻¹) ∘ (λ (z : ℂ), (z - c)) :=
-    by {ext1, simp,},
-  rw func_eq,
-  apply continuous_at.comp,
-  have h: (x-c)≠ 0 := by {symmetry, intro hy, 
-    have h':=zero_exact hy, exact x_in h',},
-  exact normed_field.continuous_at_inv.mpr h,
-  have cm: continuous (λ (z : ℂ), z - c) :=
-    continuous_sub_right c,
-  exact continuous.continuous_at cm,
-end
-
-lemma part_of_dslope_continuous{f : ℂ → E} {c: ℂ}
+lemma part_of_dslope_continuous_on{f : ℂ → E} {c: ℂ}
 {b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r)
 (Hc : continuous_on f (set.interval l r ×ℂ set.interval b t)):
@@ -839,7 +881,7 @@ continuous_on ((λ (z : ℂ), (z - c)⁻¹) • f)
 begin 
   have hr: continuous_on (λ (z : ℂ), (z - c)⁻¹) 
     (rectangle b r t l '' set.interval 0 1) := 
-    continuous_on.mono (reciprocal_continuous c)
+    continuous_on.mono (reciprocal_continuous_on c)
       (image_rectangle_sub_compl_center bc ct lc cr),
   have ss :(set.interval l r ×ℂ set.interval b t) ∩ {c}ᶜ
   ⊆ (set.interval l r ×ℂ set.interval b t) := 
@@ -884,11 +926,11 @@ begin
       apply contour_integral_sub',
       {
         rw left_func,
-        exact part_of_dslope_continuous bc ct lc cr Hc,
+        exact part_of_dslope_continuous_on bc ct lc cr Hc,
       },
       {
         rw right_func,
-        apply part_of_dslope_continuous bc ct lc cr,
+        apply part_of_dslope_continuous_on bc ct lc cr,
         apply continuous.continuous_on,
         exact continuous_const,
         exact _inst_3,
@@ -905,11 +947,27 @@ begin
   exact _inst_3,
 end
 
+lemma log_comp_affine_continuous_on{a b:ℂ}{s:set ℝ}
+(ha: a ≠ 0)
+(h: ∀ (x:ℝ), x∈ s→ 0 < (a*x+b).re ∨ (a*x+b).im ≠ 0):
+continuous_on (λ (t : ℝ), (a⁻¹*complex.log (a*t + b))) s:=
+begin
+  apply continuous_on.const_smul _ a⁻¹,
+  exact is_scalar_tower.has_continuous_const_smul,
+  apply continuous_on.clog,
+  exact continuous.continuous_on (affine_rtc_continuous a b), 
+  exact h,
+end
+
 lemma log_comp_affine_has_deriv {a b:ℂ}{x:ℝ}
 (ha: a ≠ 0)(h: 0 < (a*x+b).re ∨ (a*x+b).im ≠ 0):
-has_deriv_at (λ (t : ℝ), (complex.log (a*t + b))*a⁻¹)
+has_deriv_at (λ (t : ℝ), (a⁻¹*complex.log (a*t + b)))
 ((a*x+b)⁻¹) x :=
-begin
+begin 
+  have funrw: (λ (t : ℝ), (a⁻¹*complex.log (a*t + b)))
+  =(λ (t : ℝ), (complex.log (a*t + b))*a⁻¹):= 
+    by {ext1, rw mul_comm,},
+  rw funrw,
   have axbrw: (a*x+b)⁻¹ = (a*(a*x+b)⁻¹)*a⁻¹:=
     by {rw mul_comm _ (a*x+b)⁻¹, rw mul_assoc,
         have a':a * a⁻¹=1:= div_self ha,
@@ -934,9 +992,27 @@ begin
     λ (t : ℝ), ↑t) (a*1) x := by simp,
   rw conc,
   apply has_deriv_at.comp,
-  sorry,
+  exact complex_affine_has_deriv a b _,
   exact coe_has_deriv _,
   exact h,
+end
+
+lemma integral_of_fraction{a b:ℂ}{lef ref:ℝ}
+(ha: a ≠ 0)(hlr: lef ≤ ref)
+(h: ∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
+0 < (a*x+b).re ∨ (a*x+b).im ≠ 0):
+∫ (t: ℝ) in lef..ref, ((a*t+b)⁻¹) =
+a⁻¹*(complex.log (a*ref + b)-complex.log(a*lef+b)):=
+begin
+  rw mul_sub,
+  apply interval_integral.integral_eq_sub_of_has_deriv_at_of_le hlr,
+  exact log_comp_affine_continuous_on ha h,
+  intros x x_in,
+  have x_in':=set.Ioo_subset_Icc_self x_in,
+  have h':= h x x_in',
+  exact log_comp_affine_has_deriv ha h',
+  apply continuous_on.interval_integrable,
+  sorry,
 end
 
 lemma winding_number_of_rectangle {c: ℂ}
