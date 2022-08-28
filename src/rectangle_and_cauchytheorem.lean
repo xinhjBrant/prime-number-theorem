@@ -328,11 +328,7 @@ end
 
 lemma interior_rectangle_open(b r t l:ℝ): 
 is_open (set.Ioo l r ×ℂ set.Ioo b t) :=
-begin
-  apply is_open.re_prod_im,
-  exact is_open_Ioo,
-  exact is_open_Ioo,
-end
+is_open.re_prod_im is_open_Ioo is_open_Ioo
 
 lemma interior_rectangle_sub_closure(b r t l:ℝ):
 (set.Ioo l r ×ℂ set.Ioo b t)⊆ 
@@ -368,10 +364,8 @@ lemma interior_rectangle_neighborhood' {c: ℂ}
 {b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
 (set.Ioo l r ×ℂ set.Ioo b t) ∈ (nhds c) :=
-begin
-  exact interior_rectangle_neighborhood 
-    (center_in_interior_rectangle bc ct lc cr),
-end
+  interior_rectangle_neighborhood 
+  (center_in_interior_rectangle bc ct lc cr)
 
 lemma closure_rectangle_neighborhood {c: ℂ}
 {b r t l:ℝ} (hin: c ∈ (set.Ioo l r ×ℂ set.Ioo b t) ):
@@ -388,10 +382,8 @@ lemma closure_rectangle_neighborhood' {c: ℂ}
 {b r t l:ℝ}(bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
 (set.interval l r ×ℂ set.interval b t) ∈ (nhds c) :=
-begin
-  exact closure_rectangle_neighborhood 
-    (center_in_interior_rectangle bc ct lc cr),
-end
+  closure_rectangle_neighborhood 
+  (center_in_interior_rectangle bc ct lc cr)
 
 lemma image_rec_bottom {l:ℝ}(b:ℝ){r:ℝ}(lr:l≤ r):
 set.image (rec_bottom l b r) (set.interval 0 1)
@@ -553,10 +545,8 @@ lemma image_rectangle_sub_compl_center{c: ℂ}
 (lc: l < c.re) (cr: c.re < r):
 set.image (rectangle b r t l) (set.interval 0 1) ⊆ {c}ᶜ :=
 begin
-  have b_lt_t : b<t := lt_trans bc ct,
-  have l_lt_r : l<r := lt_trans lc cr,
-  have bt: b≤ t:= le_of_lt b_lt_t,
-  have lr: l≤ r:= le_of_lt l_lt_r,
+  have bt: b≤ t:= le_of_lt (lt_trans bc ct),
+  have lr: l≤ r:= le_of_lt (lt_trans lc cr),
   rw image_rectangle' bt lr,
   rw set.union_subset_iff, split,
   rw set.union_subset_iff, split,
@@ -597,12 +587,9 @@ lemma image_rectangle_sub_closure_inter_compl_center
 set.image (rectangle b r t l) (set.interval 0 1) ⊆ 
 (set.interval l r ×ℂ set.interval b t) ∩ {c}ᶜ :=
 begin
-  have b_lt_t : b<t := lt_trans bc ct,
-  have l_lt_r : l<r := lt_trans lc cr,
-  have bt: b≤ t:= le_of_lt b_lt_t,
-  have lr: l≤ r:= le_of_lt l_lt_r,
   rw set.subset_inter_iff, split,
-  exact image_rectangle_sub_closure bt lr,
+  exact image_rectangle_sub_closure 
+    (le_of_lt (lt_trans bc ct)) (le_of_lt (lt_trans lc cr)),
   exact image_rectangle_sub_compl_center bc ct lc cr,
 end
 
@@ -1199,6 +1186,48 @@ begin
   apply integral_of_fraction_I bt,
   intros x x_in, simp,
   left, exact cr,
+end
+
+@[protected] lemma integral_left_two_pieces{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+contour_integral (λz:ℂ, (z-c)⁻¹) (rec_left t l b) 
+= -(complex.I • ∫ (x: ℝ) in (c.im)..t, (l+x*complex.I-c)⁻¹)
+- (complex.I • ∫ (x: ℝ) in b..(c.im), (l+x*complex.I-c)⁻¹):=
+begin
+  have bt: b< t:= (lt_trans bc ct),
+  rw integral_along_rectangle_left,
+  have lhs:-complex.I • ∫ (x : ℝ) in b..t, 
+  (↑l + ↑x * complex.I - c)⁻¹=-(complex.I • 
+  ∫ (x : ℝ) in b..t, (↑l + ↑x * complex.I - c)⁻¹):=
+    by {simp,}, rw lhs,
+  rw neg_rewrite, simp, symmetry,
+  rw ← mul_add, simp, left,
+  have tp:interval_integrable (λ (x : ℝ), 
+    (↑l + ↑x * complex.I - c)⁻¹) 
+    measure_theory.measure_space.volume b t :=
+    begin
+      apply continuous_on.interval_integrable,
+      have fr: (λ (x : ℝ), (↑l + ↑x * complex.I - c)⁻¹)
+      =(λ (x : ℝ), (complex.I * ↑x  + (↑l - c))⁻¹) :=
+        by {ext1,simp,ring_nf,}, rw fr,
+      apply affine_rtc_continuous_on,
+      intros x x_in, intro fp, 
+      have rp:(complex.I * ↑x + (↑l - c)).re=l-c.re:=
+        by simp,
+      rw fp at rp, simp at rp,
+      exact (ne_of_lt cl) (zero_exact rp),
+    end,
+  apply interval_integral.integral_add_adjacent_intervals,
+  apply interval_integrable.mono_set tp,
+  unfold set.interval, 
+  rw [min_eq_left_of_lt bc, min_eq_left_of_lt bt,
+    max_eq_right_of_lt bc, max_eq_right_of_lt bt],
+  exact set.Icc_subset_Icc_right (le_of_lt ct),
+  apply interval_integrable.mono_set tp,
+  unfold set.interval, 
+  rw [min_eq_left_of_lt ct, min_eq_left_of_lt bt,
+    max_eq_right_of_lt ct, max_eq_right_of_lt bt],
+  exact set.Icc_subset_Icc_left (le_of_lt bc),
 end
 
 lemma winding_number_of_rectangle {c: ℂ}
