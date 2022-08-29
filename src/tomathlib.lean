@@ -13,6 +13,15 @@ lemma Ioo_subset_interval {a b :α}:
 set.Ioo a b ⊆ set.interval a b :=
 set.subset.trans set.Ioo_subset_Icc_self set.Icc_subset_interval
 
+lemma Iio_inter_Icc {a b: α}:
+set.Iio b ∩ set.Icc a b = set.Ico a b :=
+by {rw subset_antisymm_iff, split,
+rw [set.Iio, set.Icc, set.Ico], intros x x_in, 
+simp at x_in, simp, split, exact x_in.2.1,
+exact x_in.1, rw set.subset_inter_iff, split,
+exact set.Ico_subset_Iio_self,
+exact set.Ico_subset_Icc_self,} 
+
 end order
 
 section topology

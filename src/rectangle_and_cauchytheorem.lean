@@ -1296,7 +1296,7 @@ begin
     {
       rw← continuous_within_at_diff_self ,
       have iccico:(set.Icc b c.im \ {x})=set.Ico b c.im:=
-        by sorry,
+        by { rw h, exact set.Icc_diff_right,},
       rw iccico,
       unfold continuous_within_at,
       apply tendsto_nhds_within_congr F_eq_on_Ico,
@@ -1325,23 +1325,37 @@ begin
       apply filter.tendsto.const_mul complex.I,
       have hs:=coe_differentiable.continuous.continuous_within_at.tendsto,
       simp at hs, simp, exact hs,
-      sorry,
+      simp, rw eventually_nhds_within_iff,
+      rw eventually_nhds_iff,
+      use set.univ, split,
+      intros new_x x_in_1 x_in_2, 
+      simp at x_in_2, exact x_in_2.2,
+      split, exact is_open_univ,
+      exact set.mem_univ c.im,
     },
     {
-      -- the following proof in this block is probably wrong
-      have iccico:set.Icc b c.im = (set.Ico b c.im) ∪ 
-        {c.im} := by sorry,
-      rw iccico,
-      apply continuous_within_at.union,
-      have x_in':x∈ set.Ico b c.im:= by sorry,
-      apply continuous_on.continuous_within_at _ x_in',
+      have x_now_in:x∈ set.Ico b c.im := 
+        by {unfold set.Ico, simp,
+          unfold set.Icc at x_in, simp at x_in,
+          split, exact x_in.1,
+          exact ne.lt_of_le h x_in.2,},
+      have Iconhd:set.Ico b c.im∈ nhds_within x 
+        (set.Icc b c.im):= 
+        by {rw mem_nhds_within, use (set.Iio c.im), split,
+        exact is_open_Iio, split,
+        exact set.Ico_subset_Iio_self x_now_in,
+        exact eq.subset Iio_inter_Icc,} ,
+      rw ← continuous_within_at_inter' Iconhd,
+      rw set.inter_comm,
+      rw set.inter_eq_left_iff_subset.2 
+        set.Ico_subset_Icc_self,
+      apply continuous_on.continuous_within_at _ x_now_in,
       apply continuous_on.congr _ 
         (set.eq_on.symm F_eq_on_Ico),
       apply log_comp_affine_continuous_on complex.I_ne_zero,
       intros xx xx_in, simp, right, intro xf,
       simp at xx_in,
       exact (ne_of_lt xx_in.2) (zero_sym_exact xf),
-      sorry,
     },
   },
   {
