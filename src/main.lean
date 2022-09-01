@@ -94,10 +94,15 @@ lemma range_sub_eq_Ioc {f : ℕ → ℝ}(a b : ℕ) (h: a ≤ b) : (∑ (n : ℕ
     rw ← h₁,
     rw sub_eq_iff_eq_add,
     symmetry,
-    have h₂: finset.filter nat.prime (finset.Ico 0 (a + 1)) ⊆ finset.filter nat.prime (finset.Ico 0 (b + 1)):=
+    have h₂ : finset.filter nat.prime (finset.Ico 0 (a + 1)) ⊆ finset.filter nat.prime (finset.Ico 0 (b + 1)) := 
       begin
-      have h₂₁: finset.Ico 0 (a + 1)⊆ finset.Ico 0 (b + 1):=begin
-      sorry,
+        have h₂₁: finset.Ico 0 (a + 1)⊆ finset.Ico 0 (b + 1) :=
+          begin
+            have h₂₁₁: 0 ≤ 0 := by simp,
+            have h₂₁₂: a + 1 ≤ b + 1 := add_le_add_right hab 1,
+            exact finset.Ico_subset_Ico h₂₁₁ h₂₁₂,
+          end,
+        exact finset.filter_subset_filter nat.prime h₂₁,
       end,
     rw ←finset.sum_sdiff h₂,
     simp,
