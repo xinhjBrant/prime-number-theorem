@@ -38,6 +38,37 @@ lemma eventually_nhds_eq_iff {a : α} {f g : α → β} :
 
 end topology
 
+section complex
+
+lemma continuous_on_log_of_upper_plane:
+  continuous_on complex.log {z : ℂ | 0 ≤ z.im ∧ z≠ 0}:=
+begin
+  intros z z_in,
+  simp at z_in,
+  by_cases him:z.im=0,
+  by_cases hre:z.re<0,
+  {
+    apply continuous_within_at.mono,
+    exact complex.continuous_within_at_log_of_re_neg_of_im_zero
+      hre him,
+    simp, intros a a_in_1 a_in_2, exact a_in_1,
+  },
+  {
+    apply continuous_at.continuous_within_at,
+    apply continuous_at_clog, 
+    left, simp at hre, by_cases z.re=0,
+    exfalso, exact z_in.2 (complex.ext h him),
+    exact (ne.symm h).lt_of_le hre,
+  },
+  {
+    apply continuous_at.continuous_within_at,
+    apply continuous_at_clog, 
+    right, exact him,
+  },
+end
+
+end complex
+
 section integral
 
 variables {E : Type} 

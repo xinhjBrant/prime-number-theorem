@@ -24,7 +24,7 @@ begin
   rw b_z, simp,
 end
 
-lemma zero_sym_exact{a b:E}(h:a-b=0):a=b:=
+lemma zero_symm_exact{a b:E}(h:a-b=0):a=b:=
 begin
   have h':0=a-b:=by rw h,
   exact zero_exact h',
@@ -1062,6 +1062,26 @@ begin
   rw md, ring_nf,
 end-/
 
+lemma integral_of_fraction'{a b:ℂ}{lef ref:ℝ}
+(ha: a ≠ 0)(hlr: lef ≤ ref)
+(h: ∀ (x:ℝ), (x∈ (set.Ioo lef ref)) → 
+0 < (a*x+b).re ∨ (a*x+b).im ≠ 0)
+(hc:continuous_on  (λ x : ℝ, a⁻¹ * complex.log (a * x + b)) 
+(set.Icc lef ref))
+(hii: interval_integrable (λ (y : ℝ), (a * ↑y + b)⁻¹) 
+measure_theory.measure_space.volume lef ref):
+∫ (t: ℝ) in lef..ref, ((a*t+b)⁻¹) =
+a⁻¹*(complex.log (a*ref + b)-complex.log(a*lef+b)):=
+begin
+  rw mul_sub,
+  apply interval_integral.integral_eq_sub_of_has_deriv_at_of_le hlr,
+  exact hc,
+  intros x x_in,
+  have h':= h x x_in,
+  exact log_comp_affine_has_deriv ha h',
+  exact hii,
+end
+
 lemma integral_of_fraction{a b:ℂ}{lef ref:ℝ}
 (ha: a ≠ 0)(hlr: lef ≤ ref)
 (h: ∀ (x:ℝ), (x∈ (set.Icc lef ref)) → 
@@ -1069,16 +1089,13 @@ lemma integral_of_fraction{a b:ℂ}{lef ref:ℝ}
 ∫ (t: ℝ) in lef..ref, ((a*t+b)⁻¹) =
 a⁻¹*(complex.log (a*ref + b)-complex.log(a*lef+b)):=
 begin
-  rw mul_sub,
-  apply interval_integral.integral_eq_sub_of_has_deriv_at_of_le hlr,
-  exact log_comp_affine_continuous_on ha h,
+  apply integral_of_fraction' ha hlr,
   intros x x_in,
-  have x_in':=set.Ioo_subset_Icc_self x_in,
-  have h':= h x x_in',
-  exact log_comp_affine_has_deriv ha h',
+  exact h x (set.Ioo_subset_Icc_self x_in),
+  exact log_comp_affine_continuous_on ha h,
   apply continuous_on.interval_integrable,
   apply affine_rtc_continuous_on,
-  intros x x_in, 
+  intros x x_in,
   unfold set.interval at x_in,
   have lef_rw:(min lef ref)=lef:= min_eq_left hlr,
   have ref_rw:(max lef ref)=ref:= max_eq_right hlr,
@@ -1105,6 +1122,30 @@ begin
   rw lhs, 
   rw integral_of_fraction one_ne_zero hlr' h',
   simp,
+end
+
+lemma integral_of_fraction_I'{b:ℂ}{lef ref:ℝ}
+(hlr: lef < ref)
+(h: ∀ (x:ℝ), (x∈ (set.Ioo lef ref)) → 
+0 < (complex.I*x+b:ℂ).re ∨ (complex.I*x+b:ℂ).im ≠ 0)
+(hc:continuous_on  (λ x : ℝ, complex.log (complex.I * x + b)) 
+(set.Icc lef ref))
+(hii: interval_integrable (λ (y : ℝ), (complex.I * y + b)⁻¹) 
+measure_theory.measure_space.volume lef ref):
+complex.I • ∫ (t: ℝ) in lef..ref, ((complex.I*t+b:ℂ)⁻¹) =
+(complex.log (complex.I * ref + b)) -
+(complex.log (complex.I * lef + b)) :=
+begin
+  have i_ne_zero:complex.I≠ 0:=complex.I_ne_zero,
+  have hlr':lef≤ ref:= le_of_lt hlr,
+  have hc':continuous_on  (λ x : ℝ, 
+    (complex.I)⁻¹*complex.log (complex.I * x + b)) 
+    (set.Icc lef ref):=
+      by { have hcm:=
+      continuous_on.const_smul hc (complex.I)⁻¹,
+      simp, simp at hcm, exact hcm,}, 
+  rw integral_of_fraction' i_ne_zero hlr' h hc' hii,
+  simp, rw ← mul_assoc, simp,
 end
 
 lemma integral_of_fraction_I{b:ℂ}{lef ref:ℝ}
@@ -1144,7 +1185,7 @@ begin
   apply integral_of_fraction_one lr, 
   intros x x_in, rw add_sub,
   simp, right, intro f,
-  exact (ne_of_lt bc) (zero_sym_exact f),
+  exact (ne_of_lt bc) (zero_symm_exact f),
 end
 
 lemma integral_of_reciprocal_on_top {c: ℂ}
@@ -1163,7 +1204,7 @@ begin
   apply integral_of_fraction_one lr, 
   intros x x_in, rw add_sub,
   simp, right, intro f,
-  have f':= zero_sym_exact f,
+  have f':= zero_symm_exact f,
   rw f' at ct, simp at ct, exact ct,
 end
 
@@ -1189,7 +1230,7 @@ begin
 end
 
 @[protected] lemma integrable_lxc_inv_bt{c:ℂ}{t l b:ℝ}
-(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 interval_integrable (λ (x : ℝ), 
 (complex.I * ↑x  + (↑l - c))⁻¹)
 measure_theory.measure_space.volume b t :=
@@ -1200,18 +1241,18 @@ begin
   have rp:(complex.I * ↑x + (↑l - c)).re=l-c.re:=
     by simp,
   rw fp at rp, simp at rp,
-  exact (ne_of_lt cl) (zero_exact rp),
+  exact (ne_of_lt lc) (zero_exact rp),
 end
 
 @[protected] lemma integrable_lxc_inv_bcim{c:ℂ}{t l b:ℝ}
-(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 interval_integrable (λ (x : ℝ), 
 (complex.I * ↑x  + (↑l - c))⁻¹) 
 measure_theory.measure_space.volume b c.im :=
 begin
   have bt: b< t:= (lt_trans bc ct),
   apply interval_integrable.mono_set 
-    (integrable_lxc_inv_bt bc ct cl),
+    (integrable_lxc_inv_bt bc ct lc),
   unfold set.interval, 
   rw [min_eq_left_of_lt bc, min_eq_left_of_lt bt,
     max_eq_right_of_lt bc, max_eq_right_of_lt bt],
@@ -1219,14 +1260,14 @@ begin
 end
 
 @[protected] lemma integrable_lxc_inv_cimt{c:ℂ}{t l b:ℝ}
-(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 interval_integrable (λ (x : ℝ), 
 (complex.I * ↑x  + (↑l - c))⁻¹) 
 measure_theory.measure_space.volume c.im t :=
 begin
   have bt: b< t:= (lt_trans bc ct),
   apply interval_integrable.mono_set 
-    (integrable_lxc_inv_bt bc ct cl),
+    (integrable_lxc_inv_bt bc ct lc),
   unfold set.interval, 
   rw [min_eq_left_of_lt ct, min_eq_left_of_lt bt,
     max_eq_right_of_lt ct, max_eq_right_of_lt bt],
@@ -1234,7 +1275,7 @@ begin
 end
 
 @[protected] lemma integral_left_two_pieces{c:ℂ}{t l b:ℝ}
-(bc: b < c.im) (ct: c.im < t) (cl: l < c.re):
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 contour_integral (λz:ℂ, (z-c)⁻¹) (rec_left t l b) 
 = -(complex.I • ∫ (x: ℝ) in (c.im)..t, (l+x*complex.I-c)⁻¹)
 - (complex.I • ∫ (x: ℝ) in b..(c.im), (l+x*complex.I-c)⁻¹):=
@@ -1250,8 +1291,29 @@ begin
   rw neg_rewrite, simp, symmetry,
   rw ← mul_add, simp, left,
   exact interval_integral.integral_add_adjacent_intervals 
-    (integrable_lxc_inv_bcim bc ct cl)
-    (integrable_lxc_inv_cimt bc ct cl),
+    (integrable_lxc_inv_bcim bc ct lc)
+    (integrable_lxc_inv_cimt bc ct lc),
+end
+
+@[protected] lemma crel{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
+c.re - l = complex.abs(l-c.re):=
+begin
+  sorry,
+end
+
+@[protected] lemma lcre{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
+↑l - ↑(c.re)=complex.I*c.im+(l-c:ℂ) :=
+begin
+  sorry,
+end
+
+@[protected] lemma lcrearg{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
+(l - (c.re):ℂ).arg=real.pi :=
+begin
+  sorry,
 end
 
 lemma integral_on_lower_left{c:ℂ}{t l b:ℝ}
@@ -1311,16 +1373,13 @@ begin
       (↑l - c)))= complex.log ∘ (λk:ℝ, (complex.I * ↑k + 
       (↑l - c))):= by simp, rw ftr,
       apply filter.tendsto.comp,
-      have crel:c.re - l = complex.abs(l-c.re):= by sorry,
-      rw crel,
+      rw crel bc ct lc,
       apply complex.tendsto_log_nhds_within_im_neg_of_re_neg_of_im_zero,
       simp, exact lc, 
       simp,
       apply tendsto_nhds_within_of_tendsto_nhds_of_eventually_within
         (λ (k : ℝ), complex.I * ↑k + (↑l - c)),
-      have lcre:↑l - ↑(c.re)=complex.I*c.im+(l-c:ℂ):=
-        by sorry,
-      rw lcre,
+      rw lcre bc ct lc,
       apply filter.tendsto.add_const (l-c:ℂ),
       apply filter.tendsto.const_mul complex.I,
       have hs:=coe_differentiable.continuous.continuous_within_at.tendsto,
@@ -1355,7 +1414,7 @@ begin
       apply log_comp_affine_continuous_on complex.I_ne_zero,
       intros xx xx_in, simp, right, intro xf,
       simp at xx_in,
-      exact (ne_of_lt xx_in.2) (zero_sym_exact xf),
+      exact (ne_of_lt xx_in.2) (zero_symm_exact xf),
     },
   },
   {
@@ -1363,10 +1422,65 @@ begin
     apply has_eq_deriv_on_Ioo (le_of_lt bc) F_eq_on_Ioo x_in,
     apply log_comp_affine_has_deriv complex.I_ne_zero,
     simp, right, intro ff, simp at x_in,
-    exact (ne_of_lt x_in.2) (zero_sym_exact ff),
+    exact (ne_of_lt x_in.2) (zero_symm_exact ff),
   },
   {
     exact (integrable_lxc_inv_bcim bc ct lc),
+  },
+end
+
+lemma integral_on_upper_left{c:ℂ}{t l b:ℝ}
+(bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
+complex.I • ∫ (x: ℝ) in (c.im)..t, (l+x*complex.I-c:ℂ)⁻¹=
+(complex.log (l+t*complex.I-c)-
+real.log(c.re-l)-real.pi*complex.I) :=
+begin
+  rw sub_sub,
+  have cc: (↑(real.log (c.re - l)) 
+    + ↑real.pi * complex.I) = 
+    complex.log ( complex.I * (c.im)+(l - c)) :=
+    by {rw ← lcre bc ct lc,
+        unfold complex.log, rw← crel bc ct lc,
+        simp, left, rw← lcrearg bc ct lc,},
+  rw cc,
+  have lhs:(λx:ℝ,(↑l + ↑x * complex.I - c)⁻¹)=
+  (λx:ℝ,( complex.I * ↑x + (l - c))⁻¹) := 
+    by {ext1, simp, ring_nf,}, rw lhs,
+  have rhs: ↑l + ↑t * complex.I - c = 
+    complex.I * ↑t + (↑l - c) := by ring_nf, rw rhs,
+  apply integral_of_fraction_I' ct,
+  {
+    intros x x_in,
+    simp, simp at x_in,
+    right, intro xcim,
+    exact (ne_of_lt x_in.1) (zero_symm_exact xcim).symm,
+  },
+  {
+    have func_rw: (λ (x : ℝ), 
+      complex.log (complex.I * ↑x + (↑l - c))) = 
+      (λ(z:ℂ), complex.log z)∘ 
+      (λ(x:ℝ), (complex.I * ↑x + (↑l - c))) :=
+      by {ext1,simp,}, rw func_rw,
+    apply continuous_on.comp,
+    {
+      exact continuous_on_log_of_upper_plane,
+    },
+    {
+      exact (affine_rtc_continuous complex.I (l-c:ℂ)).continuous_on,
+    },
+    {
+      unfold set.maps_to, intros x x_in, 
+      simp, simp at x_in, split,
+      exact x_in.1,
+      intro idd,
+      have iddre:(complex.I * ↑x + (↑l - c)).re=0:=
+        (congr_arg complex.re idd).trans rfl,
+      simp at iddre,
+      exact (ne_of_lt lc) (zero_symm_exact iddre),
+    },
+  },
+  {
+    exact integrable_lxc_inv_cimt bc ct lc,
   },
 end
 
