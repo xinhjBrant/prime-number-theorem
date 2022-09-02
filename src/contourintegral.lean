@@ -964,7 +964,7 @@ end
 
 /- The integral along the inverse of a path is equal to the negative number of that along the original path. -/
 theorem contour_integral_along_inverse_path
-{f : ℂ → E} {L:ℝ → ℂ}(hf: continuous f) :
+(f : ℂ → E) (L:ℝ → ℂ) :
 contour_integral f (path_inverse L) = - contour_integral f L :=
 begin
   unfold contour_integral,
