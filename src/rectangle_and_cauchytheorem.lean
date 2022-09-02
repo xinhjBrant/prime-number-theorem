@@ -1484,13 +1484,33 @@ begin
   },
 end
 
+lemma integral_of_reciprocal_on_left {c: ℂ}
+{t l b:ℝ}(bc: b < c.im) (ct: c.im < t) (lc: l < c.re) :
+contour_integral (λz:ℂ, (z-c)⁻¹) (rec_left t l b) = 
+complex.log (l+b*complex.I-c) -
+complex.log (l+t*complex.I-c) + 2*real.pi*complex.I :=
+begin
+  rw [integral_left_two_pieces bc ct lc,
+    integral_on_lower_left bc ct lc,
+    integral_on_upper_left bc ct lc],
+  simp, rw ← mul_assoc, simp, ring_nf,
+end
+
 lemma winding_number_of_rectangle {c: ℂ}
 {b r t l:ℝ} (bc: b < c.im) (ct: c.im < t)
 (lc: l < c.re) (cr: c.re < r):
 contour_integral (λz:ℂ, (z-c)⁻¹) (rectangle b r t l)
 = 2 * real.pi *complex.I :=
 begin
-  sorry,
+  rw integral_along_rectangle' 
+    (continuous_on.mono
+      (reciprocal_continuous_on c)
+      (image_rectangle_sub_compl_center bc ct lc cr)),
+  rw [integral_of_reciprocal_on_bottom bc lc cr,
+    integral_of_reciprocal_on_top ct lc cr,
+    integral_of_reciprocal_on_right bc ct cr,
+    integral_of_reciprocal_on_left bc ct lc],
+  ring_nf,
 end
 
 theorem Cauchy_integral_formula_rectangle{f : ℂ → E} {c: ℂ}
