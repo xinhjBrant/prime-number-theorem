@@ -151,15 +151,8 @@ begin
       exact hx,
     end,
     simp at hx_ε,
-    have pow1_ε_lt: ⌊x ^ (1 - ε)⌋₊ < ⌊x⌋₊ :=
-      begin
-    -- theorem nat.floor_lt_ceil_of_lt_of_pos  {a b : α} (h : a < b) (h' : 0 < b) :
-    -- ⌊a⌋₊ < ⌈b⌉₊
-    -- fail to unify
-      sorry,
-      end,
-    apply le_of_lt,
-    exact pow1_ε_lt,
+    apply nat.floor_mono,
+    exact le_of_lt hx_ε,
     end,
   have h₁: 0 < log x * (1 - ε):=
     begin
