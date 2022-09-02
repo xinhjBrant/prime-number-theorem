@@ -241,6 +241,25 @@ lemma deriv_line_integrable (a:ℂ)(b:ℂ):
   measure_theory.measure_space.volume 0 1:=
 continuous.interval_integrable (line_is_in_C1 a b) 0 1
 
+lemma line_integral_ML_inequality{f:ℂ → E}{a b:ℂ}{M:ℝ}
+(hf: ∀ z:ℂ, z ∈ set.image (line_segment a b) 
+(set.interval 0 1) → ∥f z∥ ≤ M):
+∥contour_integral f (line_segment a b)∥ ≤ 
+M * complex.abs(b-a) :=
+begin
+  apply contour_integral_ML_inequality,
+  {
+    intros z z_in,
+    exact hf z ((set.image_subset (line_segment a b) 
+      set.Ioc_subset_Icc_self) z_in),
+  },
+  {
+    intros x _,
+    rw deriv_of_line,
+    unfold constant_path,
+  },
+end 
+
 /-! Part II. Define rectangles 
 
 - # Rectangles

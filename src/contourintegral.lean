@@ -783,6 +783,33 @@ begin
   exact contour_integrable_smul_continuous_on hg hl hli,
 end 
 
+lemma contour_integral_ML_inequality{f:ℂ → E}{L:ℝ → ℂ}
+{C D:ℝ}
+(hc: ∀ z:ℂ, z ∈ set.image L (set.interval_oc 0 1) → 
+∥f z∥≤ C)
+(hd: ∀ x:ℝ, (x ∈ (set.interval_oc (0:ℝ) 1)) → 
+complex.abs(deriv L x)≤ D):
+∥contour_integral f L∥≤ C*D :=
+begin
+  unfold contour_integral,
+  have cdrw:C*D =(C*D)*|1-0|:= by simp,
+  rw cdrw,
+  apply interval_integral.norm_integral_le_of_norm_le_const,
+  intros x x_in,
+  have Lx_in: L x∈ set.image L (set.interval_oc 0 1) :=
+    by {unfold set.image, simp, use x, split,
+        exact x_in, exact rfl,},
+  rw norm_smul, rw mul_comm,
+  have fL0: 0≤ ∥ f (L x) ∥ := norm_nonneg (f (L x)),
+  have fL1: ∥ f (L x) ∥≤ C := hc (L x) Lx_in,
+  have dL0: 0≤ ∥deriv L x∥ := norm_nonneg (deriv L x),
+  have dL1: ∥deriv L x∥≤ D:= hd x x_in,
+  have md1:=mul_mono_nonneg dL0 fL1,
+  have md2:=mul_mono_nonneg (le_trans fL0 fL1) dL1,
+  rw mul_comm at md2, rw mul_comm D _ at md2,
+  exact le_trans md1 md2,
+end
+
 /-! Part IV. Integral is an addictive function of the path
 
 - # Addictivity
