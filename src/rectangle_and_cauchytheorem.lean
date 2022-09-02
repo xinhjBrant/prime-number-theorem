@@ -826,10 +826,11 @@ end
 - # Cauchy Theorem on Rectangles
 -/
 
-theorem Cauchy_Goursat_rectangle {f : ℂ → E} (c: ℂ) 
-{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r)
+theorem Cauchy_Goursat_rectangle_countable {f : ℂ → E} 
+{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r) 
+{s: set ℂ}(hs: s.countable)
 (Hc : continuous_on f (set.interval l r ×ℂ set.interval b t)) 
-(Hd : ∀ (x : ℂ), x ∈ (set.Ioo l r ×ℂ set.Ioo b t) \ {c} 
+(Hd : ∀ (x : ℂ), x ∈ (set.Ioo l r ×ℂ set.Ioo b t) \ s 
 → differentiable_at ℂ f x) :
 contour_integral f (rectangle b r t l) = 0 :=
 begin
@@ -837,8 +838,6 @@ begin
        (set.image (rectangle b r t l) (set.interval 0 1)):=
        continuous_on.mono Hc (image_rectangle_sub_closure bt lr),
   rw integral_along_rectangle hf,
-  let s:set ℂ:={c},
-  have hs:s.countable:=set.to_countable s,
   let z:ℂ:={re:=l,im:=b},
   let w:ℂ:={re:=r,im:=t},
   have z_re : l = z.re := rfl,
@@ -858,6 +857,28 @@ begin
   have t:=complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable 
            f z w s hs Hc Hd,
   exact t,
+end
+
+theorem Cauchy_Goursat_rectangle_singleton {f : ℂ → E} 
+(c: ℂ) {b r t l:ℝ}(bt: b≤ t)(lr: l≤ r)
+(Hc : continuous_on f (set.interval l r ×ℂ set.interval b t)) 
+(Hd : ∀ (x : ℂ), x ∈ (set.Ioo l r ×ℂ set.Ioo b t) \ {c} 
+→ differentiable_at ℂ f x) :
+contour_integral f (rectangle b r t l) = 0 :=
+  Cauchy_Goursat_rectangle_countable 
+    bt lr (set.to_countable {c}) Hc Hd
+
+theorem Cauchy_Goursat_rectangle{f : ℂ → E} 
+{b r t l:ℝ}(bt: b≤ t)(lr: l≤ r)
+(Hc : continuous_on f (set.interval l r ×ℂ 
+  set.interval b t)) 
+(Hd : ∀ (x : ℂ), x ∈ (set.Ioo l r ×ℂ set.Ioo b t) 
+→ differentiable_at ℂ f x) :
+contour_integral f (rectangle b r t l) = 0 :=
+begin
+  apply Cauchy_Goursat_rectangle_singleton 0 bt lr Hc,
+  intros x x_in, simp at x_in,
+  exact Hd x x_in.1,
 end
 
 /-! Part V. Formalize the Cauchy integral formula on rectangles. 
@@ -922,7 +943,7 @@ begin
   have l_lt_r : l<r := lt_trans lc cr,
   have bt: b≤ t:= le_of_lt b_lt_t,
   have lr: l≤ r:= le_of_lt l_lt_r,
-  apply Cauchy_Goursat_rectangle c bt lr,
+  apply Cauchy_Goursat_rectangle_singleton c bt lr,
   exact dslope_continuous_on bc ct lc cr Hc Hd,
   exact dslope_differentiable_at bc ct lc cr Hc Hd,
 end
