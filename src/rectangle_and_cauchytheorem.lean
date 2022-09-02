@@ -1299,14 +1299,22 @@ end
 (bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 c.re - l = complex.abs(l-c.re):=
 begin
-  sorry,
+  have cplx:complex.abs(l-c.re)= 
+    complex.abs((l-c.re):ℝ):= by simp,
+  rw cplx, 
+  have l_sub:(((l-c.re):ℝ):ℂ)=-(((c.re-l):ℝ):ℂ):= by simp,
+  rw l_sub, rw complex.abs_neg,
+  have c_sub:c.re-l≥ 0:=
+    by {simp,exact le_of_lt lc,},
+  exact (complex.abs_of_nonneg c_sub).symm,
 end
 
 @[protected] lemma lcre{c:ℂ}{t l b:ℝ}
 (bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 ↑l - ↑(c.re)=complex.I*c.im+(l-c:ℂ) :=
 begin
-  sorry,
+  apply complex.ext,
+  simp, simp,
 end
 
 @[protected] lemma lcrearg{c:ℂ}{t l b:ℝ}
