@@ -1052,16 +1052,6 @@ begin
   exact h,
 end
 
-/-lemma split_real_imaginary_part(a b:ℝ)(c:ℂ):
-(a:ℂ)+b*complex.I-c=(a-c.re)+(b-c.im)*complex.I:=
-begin
-  ring_nf, simp,
-  have md: complex.I * ↑b - c 
-    = complex.I * ↑b - ((c.re:ℂ)+(c.im)*complex.I):=
-    by simp, 
-  rw md, ring_nf,
-end-/
-
 lemma integral_of_fraction'{a b:ℂ}{lef ref:ℝ}
 (ha: a ≠ 0)(hlr: lef ≤ ref)
 (h: ∀ (x:ℝ), (x∈ (set.Ioo lef ref)) → 
@@ -1321,7 +1311,8 @@ end
 (bc: b < c.im) (ct: c.im < t) (lc: l < c.re):
 (l - (c.re):ℂ).arg=real.pi :=
 begin
-  sorry,
+  rw complex.arg_eq_pi_iff, split,
+  simp, exact lc, simp,
 end
 
 lemma integral_on_lower_left{c:ℂ}{t l b:ℝ}
@@ -1532,34 +1523,3 @@ begin
   rw Cauchy_integral_formula_rectangle_pre bc ct lc cr Hc Hd,
   rw winding_number_of_rectangle bc ct lc cr,
 end
-
-/-! Part VI. (perhaps irrelevant) Define circles. 
-
-- # Circles
--/
-
-def circle_loop(c : ℂ) (R : ℝ) : ℝ → ℂ := 
-  λ θ, c + R * complex.exp (θ * 2 * real.pi* complex.I)
-
-lemma circle_loop_in_lib(c : ℂ) (R : ℝ)(t:ℝ ): 
-circle_loop c R t = circle_map c R (2*real.pi*t):=
-begin
-  rw circle_loop,
-  rw circle_map,
-  ext1,
-  simp,
-  left,
-  ring_nf,
-  simp,
-  left,
-  ring_nf,
-end
-
-lemma circle_loop_in_lib'(c : ℂ) (R : ℝ):
-circle_loop c R = (circle_map c R) ∘ (affine_function (2*real.pi) 0):=
-begin
-  ext1,
-  rw affine_function,
-  simp,
-  exact circle_loop_in_lib c R x,
-end 
