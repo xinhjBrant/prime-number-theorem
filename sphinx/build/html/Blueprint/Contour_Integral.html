@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Contour Integral &#8212; Formal Proof of Prime Number Theory in Lean v0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
@@ -12,6 +12,7 @@
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -34,15 +35,15 @@
           <div class="body" role="main">
             
   <section id="contour-integral">
-<h1>Contour Integral<a class="headerlink" href="#contour-integral" title="Permalink to this headline">¶</a></h1>
+<h1>Contour Integral<a class="headerlink" href="#contour-integral" title="Permalink to this heading">¶</a></h1>
 <section id="i-definitions-of-paths">
-<h2>I. Definitions of Paths<a class="headerlink" href="#i-definitions-of-paths" title="Permalink to this headline">¶</a></h2>
-<p>A path is a differentiable function <span class="math notranslate nohighlight">\(f : \mathbb{R} → \mathbb{C}\)</span> with a continuous derivative, defined on <span class="math notranslate nohighlight">\(\mathbb{R}\)</span>, but we only consider their values on [0,1].</p>
+<h2>I. Definitions of Paths<a class="headerlink" href="#i-definitions-of-paths" title="Permalink to this heading">¶</a></h2>
+<p>A path is a differentiable function <span class="math notranslate nohighlight">\(f : \mathbb{R}\to \mathbb{C}\)</span> with a continuous derivative, defined on <span class="math notranslate nohighlight">\(\mathbb{R}\)</span>, but we only consider their values on [0,1].</p>
 <dl>
 <dt>Constant Paths</dt><dd><p>For example, for any fixed point <span class="math notranslate nohighlight">\(z : \mathbb{C}\)</span> we have a constant path <span class="math notranslate nohighlight">\(\lambda (t : \mathbb{R}), z\)</span>.</p>
 </dd>
 <dt>Inverse of Paths</dt><dd><p>The inverse of a path is to reverse the direction of a path.</p>
-<p>For example, given a path <span class="math notranslate nohighlight">\(L: \mathbb{R} → \mathbb{C}\)</span>, we define the inverse of the path as <span class="math notranslate nohighlight">\(λ (t:\mathbb{R}), L(1-t)\)</span>.</p>
+<p>For example, given a path <span class="math notranslate nohighlight">\(L: \mathbb{R}\to \mathbb{C}\)</span>, we define the inverse of the path as <span class="math notranslate nohighlight">\(\lambda (t:\mathbb{R}), L(1-t)\)</span>.</p>
 </dd>
 </dl>
 </section>
@@ -92,7 +93,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -109,7 +110,7 @@
       &copy;2022, Cheuk Yu Mak, Doris Jin, Huajian Xin, Ke Yu, Vicky Shan, Xiang Li.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

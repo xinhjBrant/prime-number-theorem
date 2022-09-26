@@ -13,6 +13,8 @@ open asymptotics filter real nat.arithmetic_function
 
 local notation `π` := nat.prime_counting
 
+/-! The definition of π function in Lean is equivalent to the definition in the form of series-/
+
 lemma pi_def (x : ℝ) : (π ⌊x⌋₊ : ℝ) = ∑ n in (finset.range (⌊x⌋₊ + 1)).filter nat.prime, 1:= 
 begin
   have h₁: prime_summatory (λ _, (1 : ℝ)) 1 x = ∑ n in (finset.range (⌊x⌋₊ + 1)).filter nat.prime, 1:=
@@ -27,13 +29,19 @@ begin
   exact h₁,
 end
 
+/-! Define the limit tends to infinity under the restriction of larger than a specific number-/
+
 def at_top_within (s : set ℝ) : filter ℝ := at_top ⊓ 𝓟 s
 
 local notation `⊤[>` x `] `:100 := at_top_within (set.Ioi x)
 
 #check ⊤[>1]
 
+/-! # Prime Number Theorem-/
+
 theorem prime_number_theorem : is_O_with 1 ⊤[>1] (λ x, (π ⌊x⌋₊ : ℝ)) (λ x : ℝ, x / log x) := sorry
+
+/-! # Reduction by Chebyshev Bounds-/
 
 /-! from unit_fractions.basic_estimation-/
 notation `ϑ` := chebyshev_first

@@ -6,6 +6,13 @@
 Formal Proof of Prime Number Theory in Lean
 ===================================================
 
+This is a report of a summer project at the School of Mathematics of the University of Edinburgh,
+which is the fruit of the cooperation of Xiang Li, Huajian Xin, Ella Yu, Doris Jin and Vicky Shan,
+under the supervision of Cheuk Yu Mak.
+
+The object of the project is to formalize the proof of prime number theory in Lean.
+Currently we have
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -13,8 +20,6 @@ Formal Proof of Prime Number Theory in Lean
    Blueprint/Introduction
    Blueprint/Definitions
    Blueprint/Contour_Integral
-
-
 
 Indices and tables
 ==================
